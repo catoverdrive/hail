@@ -253,41 +253,58 @@ class CodeBoolean(val lhs: Code[Boolean]) extends AnyVal {
   def &&(rhs: Code[Boolean]): Code[Boolean] =
     Code(lhs, rhs, new InsnNode(IAND))
 
+  def scAND(rhs: Code[Boolean]): Code[Boolean] =
+    lhs.mux(
+      rhs,
+      false
+    )
+
   def ||(rhs: Code[Boolean]): Code[Boolean] =
     Code(lhs, rhs, new InsnNode(IOR))
+
+  def scOR(rhs: Code[Boolean]): Code[Boolean] =
+    lhs.unary_!().mux(
+      false,
+      rhs
+    )
 }
 
-class CodeInt(val lhs: Code[Int]) extends AnyVal {
-  def +(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(IADD))
+class CodeInt(val lhs: Code[Any]) extends AnyVal {
+  def +(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(IADD))
 
-  def -(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(ISUB))
+  def -(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(ISUB))
 
-  def *(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(IMUL))
+  def *(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(IMUL))
 
-  def /(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(IDIV))
+  def /(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(IDIV))
 
-  def >(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPGT, rhs)
+  def >(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPGT, rhs)
 
-  def >=(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPGE, rhs)
+  def >=(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPGE, rhs)
 
-  def <(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPLT, rhs)
+  def <(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPLT, rhs)
 
-  def <=(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPLE, rhs)
+  def <=(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPLE, rhs)
 
-  def >>(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(ISHR))
+  def >>(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(ISHR))
 
-  def <<(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(ISHL))
+  def <<(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(ISHL))
 
-  def &(rhs: Code[Int]): Code[Int] = Code(lhs, rhs, new InsnNode(IAND))
+  def >>>(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(IUSHR))
 
-  def ceq(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPEQ, rhs)
+  def &(rhs: Code[Any]): Code[Int] = Code(lhs, rhs, new InsnNode(IAND))
 
-  def cne(rhs: Code[Int]): Code[Boolean] = lhs.compare(IF_ICMPNE, rhs)
+  def ceq(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPEQ, rhs)
 
-  def toI: Code[Int] = lhs
+  def cne(rhs: Code[Any]): Code[Boolean] = lhs.compare(IF_ICMPNE, rhs)
+
+  def negate(): Code[Int] = Code(lhs, new InsnNode(INEG))
+
+  def toI: Code[Any] = lhs
   def toL: Code[Long] = Code(lhs, new InsnNode(I2L))
   def toF: Code[Float] = Code(lhs, new InsnNode(I2F))
   def toD: Code[Double] = Code(lhs, new InsnNode(I2D))
+  def toB: Code[Byte] = Code(lhs, new InsnNode(I2B))
 }
 
 class CodeLong(val lhs: Code[Long]) extends AnyVal {
@@ -303,6 +320,16 @@ class CodeLong(val lhs: Code[Long]) extends AnyVal {
 
   def <(rhs: Code[Long]): Code[Boolean] = compare(rhs) < 0
   def >(rhs: Code[Long]): Code[Boolean] = compare(rhs) > 0
+  def ceq(rhs: Code[Long]): Code[Boolean] = compare(rhs) ceq 0
+  def cne(rhs: Code[Long]): Code[Boolean] = compare(rhs) cne 0
+
+  def >>(rhs: Code[Long]): Code[Long] = Code(lhs, rhs, new InsnNode(LSHR))
+
+  def <<(rhs: Code[Long]): Code[Long] = Code(lhs, rhs, new InsnNode(LSHL))
+
+  def >>>(rhs: Code[Long]): Code[Long] = Code(lhs, rhs, new InsnNode(LUSHR))
+
+  def &(rhs: Code[Long]): Code[Long] = Code(lhs, rhs, new InsnNode(LAND))
 
   def toI: Code[Int] = Code(lhs, new InsnNode(L2I))
   def toL: Code[Long] = lhs
@@ -373,6 +400,7 @@ class CodeArray[T](val lhs: Code[Array[T]])(implicit tti: TypeInfo[T]) {
 
   def length(): Code[Int] =
     Code(lhs, new InsnNode(ARRAYLENGTH))
+
 }
 
 object Invokeable {

@@ -279,6 +279,17 @@ final class MemoryBuffer(var mem: Long, var length: Long, var offset: Long = 0) 
   }
 
   def visit(t: Type, off: Long, v: ValueVisitor) {
+
+    def followOffset(t: Type, off: Long): Long = {
+      t match {
+        case TString => loadAddress(off)
+        case TBinary => loadAddress(off)
+        case t: TContainer => loadAddress(off)
+        case t: ComplexType => followOffset(t.representation.fundamentalType, off)
+        case _ => off
+      }
+    }
+
     t match {
       case TBoolean => v.visitBoolean(loadBoolean(off))
       case TInt32 => v.visitInt32(loadInt(off))
@@ -286,22 +297,23 @@ final class MemoryBuffer(var mem: Long, var length: Long, var offset: Long = 0) 
       case TFloat32 => v.visitFloat32(loadFloat(off))
       case TFloat64 => v.visitFloat64(loadDouble(off))
       case TString =>
-        val boff = loadAddress(off)
+        val boff = off
         v.visitString(TString.loadString(this, boff))
       case TBinary =>
-        val boff = loadAddress(off)
+        val boff = off
         val length = TBinary.loadLength(this, boff)
         val b = loadBytes(TBinary.bytesOffset(boff), length)
         v.visitBinary(b)
       case t: TContainer =>
-        val aoff = loadAddress(off)
+        val aoff = off
         val length = t.loadLength(this, aoff)
         v.enterArray(t, length)
         var i = 0
         while (i < length) {
           v.enterElement(i)
-          if (t.isElementDefined(this, aoff, i))
-            visit(t.elementType, t.elementOffset(aoff, length, i), v)
+          if (t.isElementDefined(this, aoff, i)) {
+            visit(t.elementType, followOffset(t.elementType, t.elementOffset(aoff, length, i)), v)
+          }
           else
             v.visitMissing(t.elementType)
           i += 1
@@ -313,9 +325,9 @@ final class MemoryBuffer(var mem: Long, var length: Long, var offset: Long = 0) 
         while (i < t.size) {
           val f = t.fields(i)
           v.enterField(f)
-          if (t.isFieldDefined(this, off, i))
-            visit(f.typ, t.fieldOffset(off, i), v)
-          else
+          if (t.isFieldDefined(this, off, i)) {
+            visit(f.typ, followOffset(f.typ, t.fieldOffset(off, i)), v)
+          } else
             v.visitMissing(f.typ)
           v.leaveField()
           i += 1
@@ -640,7 +652,8 @@ class RegionValueBuilder(var region: MemoryBuffer) {
     region.appendInt(bytes.length)
     region.appendBytes(bytes)
 
-    region.storeAddress(off, boff)
+    if (off != boff)
+      region.storeAddress(off, boff)
 
     advance()
   }

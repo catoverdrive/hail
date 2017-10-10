@@ -206,6 +206,10 @@ class FunctionBuilder[F >: Null](parameterTypeInfo: Array[MaybeGenericTypeInfo[_
 
   def result(): () => F = {
     val bytes = classAsBytes()
+
+    //this should not stay here.
+    FunctionBuilder.bytesToBytecodeString(bytes, FunctionBuilder.stderrAndLoggerErrorOS)
+
     val localName = name.replaceAll("/",".")
 
     new (() => F) with java.io.Serializable {

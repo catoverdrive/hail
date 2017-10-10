@@ -136,8 +136,8 @@ package object asm4s {
     val name = "B"
     val loadOp = ILOAD
     val storeOp = ISTORE
-    val aloadOp = IALOAD
-    val astoreOp = IASTORE
+    val aloadOp = BALOAD
+    val astoreOp = BASTORE
     val returnOp = IRETURN
     val newarrayOp = NEWARRAY
 
@@ -265,6 +265,8 @@ package object asm4s {
 
   implicit def toCodeBoolean(c: Code[Boolean]): CodeBoolean = new CodeBoolean(c)
 
+  implicit def toCodeByte(c: Code[Byte]): CodeInt = new CodeInt(c)
+
   implicit def toCodeInt(c: Code[Int]): CodeInt = new CodeInt(c)
 
   implicit def toCodeLong(c: Code[Long]): CodeLong = new CodeLong(c)
@@ -316,4 +318,6 @@ package object asm4s {
   implicit def const(f: Float): Code[Float] = Code(new LdcInsnNode(f))
 
   implicit def const(d: Double): Code[Double] = Code(new LdcInsnNode(d))
+
+  implicit def const(b: Byte): Code[Byte] = Code(new LdcInsnNode(b))
 }
