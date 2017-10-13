@@ -41,6 +41,10 @@ final class Decoder() {
     d
   }
 
+  def readBytes(region: MemoryBuffer, off: Long, n: Int) {
+    readBytes(region.mem, off, n)
+  }
+
   def readBytes(mem: Long, off: Long, n: Int) {
     Memory.memcpy(mem + off, inMem, inOff, n)
     inOff += n

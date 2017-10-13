@@ -14,6 +14,9 @@ class StagedStructBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Lon
   val idx: LocalRef[Int] = fb.newLocal[Int]
   def currentOffset: Code[Long] = fieldOffsets.load()(idx.load())
 
+  def getType: TStruct = rowType
+  override def getCurrentOffset: Code[Long] = currentOffset
+
   def start(offset: Code[Long] = null, init: Boolean = true): Code[Unit] = {
     var c = startOffset.store(offset)
 
@@ -34,7 +37,7 @@ class StagedStructBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Lon
     c
   }
 
-  def advance(): Code[Unit] = {
+  override def advance(): Code[Unit] = {
     idx.store(idx.load() + 1)
   }
 
@@ -97,6 +100,9 @@ class StagedArrayBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Long
   val nMissingBytes: LocalRef[Int] = fb.newLocal[Int]
   val i: LocalRef[Int] = fb.newLocal[Int]
 
+  override def getCurrentOffset: Code[Long] = currentOffset
+  def getType: TArray = rowType
+
   def start(length: Code[Int], init: Boolean = true): Code[Unit] = {
     var c = Code(
       region.align(rowType.contentsAlignment),
@@ -108,7 +114,7 @@ class StagedArrayBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Long
     Code(c, i.store(0))
   }
 
-  def advance(): Code[Unit] = {
+  override def advance(): Code[Unit] = {
     Code(
       currentOffset.store(currentOffset.load() + rowType.elementByteSize),
       i.store(i.load() + 1)
@@ -148,10 +154,6 @@ class StagedArrayBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Long
 
   override def startStruct(srvb: StagedStructBuilder[T]): Code[Unit] = {
     assert(rowType.elementType.isInstanceOf[TStruct])
-    Code(
-      region.align(srvb.alignment),
-      srvb.start(currentOffset)
-    )
     srvb.start(currentOffset)
   }
 
@@ -217,9 +219,11 @@ class StagedObjectBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, L
 
 class StagedRegionValueBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]])(implicit tti: TypeInfo[T]) {
 
-  val input: Code[T] = fb.getArg[T](1)
+  val input: LocalRef[T] = fb.getArg[T](1)
   val region: StagedMemoryBuffer = new StagedMemoryBuffer(fb.getArg[MemoryBuffer](2))
   val startOffset: LocalRef[Long] = fb.newLocal[Long]
+  def getCurrentOffset: Code[Long] = region.size
+  def getFunctionBuilder: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]] = fb
 
   var transform: AsmFunction2[T, MemoryBuffer, Long] = _
 
@@ -239,6 +243,11 @@ class StagedRegionValueBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuff
         )
     }
     c
+  }
+
+  def advance(): Code[Unit] = {
+    assert(false)
+    _empty
   }
 
   def build() {
@@ -299,6 +308,10 @@ class StagedRegionValueBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuff
 }
 
 class StagedMemoryBuffer(region: Code[MemoryBuffer]) {
+
+  def get: Code[MemoryBuffer] = region
+
+  def mem: Code[Long] = region.get[Long]("mem")
 
   def size: Code[Long] = region.invoke[Long]("size")
 
