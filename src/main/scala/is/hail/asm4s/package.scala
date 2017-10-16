@@ -265,9 +265,13 @@ package object asm4s {
 
   implicit def toCodeBoolean(c: Code[Boolean]): CodeBoolean = new CodeBoolean(c)
 
-  implicit def toCodeByte(c: Code[Byte]): CodeInt = new CodeInt(c)
+
 
   implicit def toCodeInt(c: Code[Int]): CodeInt = new CodeInt(c)
+
+  implicit def byteToCodeInt(c: Code[Byte]): CodeInt = toCodeInt(new Code[Int] {
+    def emit(il: Growable[AbstractInsnNode]) = c.emit(il)
+  })
 
   implicit def toCodeLong(c: Code[Long]): CodeLong = new CodeLong(c)
 
