@@ -5,313 +5,155 @@ import is.hail.asm4s.Code._
 import is.hail.asm4s._
 import is.hail.expr._
 import is.hail.utils._
+import scala.reflect.ClassTag
 
-class StagedStructBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Long]], rowType: TStruct)(implicit tti: TypeInfo[T]) extends StagedRegionValueBuilder[T](fb) {
+class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], val rowType: Type, var region: Code[MemoryBuffer], var currentOffset: LocalRef[Long])(implicit tti: TypeInfo[T]) {
 
-  val alignment: Long = rowType.alignment
-
-  val fieldOffsets: LocalRef[Array[Long]] = fb.newLocal[Array[Long]]
-  val idx: LocalRef[Int] = fb.newLocal[Int]
-  def currentOffset: Code[Long] = fieldOffsets.load()(idx.load())
-
-  def getType: TStruct = rowType
-  override def getCurrentOffset: Code[Long] = currentOffset
-
-  def start(offset: Code[Long] = null, init: Boolean = true): Code[Unit] = {
-    var c = startOffset.store(offset)
-
-    if (offset == null)
-      c = Code(
-        region.align(rowType.alignment),
-        startOffset.store(region.allocate(rowType.byteSize))
-      )
-    if (init)
-      c = Code(c,rowType.clearMissingBits(region, startOffset.load()))
-    c = Code(c,
-        idx.store(0),
-        fieldOffsets.store(Code.newArray[Long](rowType.size))
-      )
-    for (i <- 0 until rowType.size) {
-      c = Code(c, fieldOffsets.load().update(i, startOffset.load() + rowType.byteOffsets(i)))
-    }
-    c
+  private def this(fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], rowType: Type, parent: StagedRegionValueBuilder[T])(implicit tti: TypeInfo[T]) = {
+    this(fb, rowType, parent.region, parent.currentOffset)
+    this.parent = parent
+  }
+  def this(fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], rowType: Type)(implicit tti: TypeInfo[T]) = {
+    this(fb, rowType, fb.getArg[MemoryBuffer](2), fb.newLocal[Long])
   }
 
-  override def advance(): Code[Unit] = {
-    idx.store(idx.load() + 1)
-  }
-
-  def setMissing(): Code[Unit] = {
-    Code(
-      rowType.setFieldMissing(region, startOffset, idx),
-      advance()
-    )
-  }
-
-  override def startArray(srvb: StagedArrayBuilder[T], length: Code[Int]): Code[Unit] = {
-    Code(
-      region.align(srvb.alignment),
-      region.storeAddress(currentOffset, region.offset),
-      srvb.start(length)
-    )
-  }
-
-  override def endArray(): Code[Unit] = {
-    advance()
-  }
-
-  override def startStruct(srvb: StagedStructBuilder[T]): Code[Unit] = {
-//    Code(
-//      region.align(srvb.alignment),
-//      region.storeAddress(currentOffset, region.offset),
-    srvb.start(currentOffset)
-  }
-
-  override def endStruct(): Code[Unit] = {
-    advance()
-  }
-
-  override def addInt32(v: Code[Int]): Code[Unit] = {
-    Code(
-      region.storeInt32(currentOffset, v),
-      advance()
-    )
-  }
-
-  override def addBinary(bytes: Code[Array[Byte]]): Code[Unit] = {
-    Code(
-      region.align(TBinary.contentAlignment),
-      region.storeAddress(currentOffset, region.offset),
-      super.addBinary(bytes),
-      advance()
-    )
-  }
-
-  override def addString(str: Code[String]): Code[Unit] = {addBinary(str.invoke[Array[Byte]]("getBytes"))}
-
-
-}
-
-class StagedArrayBuilder[T](fb: FunctionBuilder[AsmFunction2[T,MemoryBuffer,Long]], rowType: TArray)(implicit tti: TypeInfo[T]) extends StagedRegionValueBuilder[T](fb) {
-
-  val alignment: Long = rowType.contentsAlignment
-
-  val currentOffset: LocalRef[Long] = fb.newLocal[Long]
-  val nMissingBytes: LocalRef[Int] = fb.newLocal[Int]
-  val i: LocalRef[Int] = fb.newLocal[Int]
-
-  override def getCurrentOffset: Code[Long] = currentOffset
-  def getType: TArray = rowType
-
-  def start(length: Code[Int], init: Boolean = true): Code[Unit] = {
-    var c = Code(
-      region.align(rowType.contentsAlignment),
-      startOffset.store(region.allocate(rowType.contentsByteSize(length))),
-      currentOffset.store(startOffset.load() + rowType.elementsOffset(length))
-    )
-    if (init)
-      c = Code(c, rowType.initialize(region, startOffset.load(), length, nMissingBytes, i))
-    Code(c, i.store(0))
-  }
-
-  override def advance(): Code[Unit] = {
-    Code(
-      currentOffset.store(currentOffset.load() + rowType.elementByteSize),
-      i.store(i.load() + 1)
-    )
-  }
-
-  def setMissing(): Code[Unit] = {
-    Code(
-      rowType.setElementMissing(region, startOffset, i),
-      advance()
-    )
-  }
-
-  override def newArray(t: TArray = rowType.elementType.asInstanceOf[TArray]): StagedArrayBuilder[T] = {
-    assert(rowType.elementType.isInstanceOf[TArray])
-    new StagedArrayBuilder(fb, t)
-  }
-
-  override def newStruct(t: TStruct = rowType.elementType.asInstanceOf[TStruct]): StagedStructBuilder[T] = {
-    assert(rowType.elementType.isInstanceOf[TStruct])
-    new StagedStructBuilder(fb, t)
-  }
-
-  override def startArray(srvb: StagedArrayBuilder[T], length: Code[Int]): Code[Unit] = {
-    assert(rowType.elementType.isInstanceOf[TArray])
-    Code(
-      region.align(srvb.alignment),
-      region.storeAddress(currentOffset, region.offset),
-      srvb.start(length)
-    )
-  }
-
-  override def endArray(): Code[Unit] = {
-    assert(rowType.elementType.isInstanceOf[TArray])
-    advance()
-  }
-
-  override def startStruct(srvb: StagedStructBuilder[T]): Code[Unit] = {
-    assert(rowType.elementType.isInstanceOf[TStruct])
-    srvb.start(currentOffset)
-  }
-
-  override def endStruct(): Code[Unit] = {
-    assert(rowType.elementType.isInstanceOf[TStruct])
-    advance()
-  }
-
-  override def addInt32(v: Code[Int]): Code[Unit] = {
-    assert(rowType.elementType == TInt32)
-    Code(
-      region.storeInt32(currentOffset, v),
-      advance()
-    )
-  }
-
-  override def addBinary(bytes: Code[Array[Byte]]): Code[Unit] = {
-    assert(rowType.elementType.fundamentalType == TBinary)
-    Code(
-      region.align(TBinary.contentAlignment),
-      region.storeAddress(currentOffset, region.offset),
-      super.addBinary(bytes),
-      advance()
-    )
-  }
-
-  override def addString(str: Code[String]): Code[Unit] = {addBinary(str.invoke[Array[Byte]]("getBytes"))}
-}
-
-class StagedObjectBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], t: Type)(implicit tti: TypeInfo[T]) extends StagedRegionValueBuilder[T](fb){
-
-  override def newArray(t: TArray): StagedArrayBuilder[T] = {
-    assert(false)
-    new StagedArrayBuilder(fb, t)
-  }
-
-  override def startArray(srvb: StagedArrayBuilder[T], length: Code[Int]): Code[Unit] = {
-    assert(false)
-    _empty
-  }
-
-  override def endArray(): Code[Unit] = {
-    assert(false)
-    _empty
-  }
-
-  override def newStruct(t: TStruct): StagedStructBuilder[T] = {
-    assert(false)
-    new StagedStructBuilder(fb, t)
-  }
-
-  override def startStruct(srvb: StagedStructBuilder[T]): Code[Unit] = {
-    assert(false)
-    _empty
-  }
-
-  override def endStruct(): Code[Unit] = {
-    assert(false)
-    _empty
-  }
-
-}
-
-class StagedRegionValueBuilder[T](fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]])(implicit tti: TypeInfo[T]) {
+  var parent: StagedRegionValueBuilder[T] = _
 
   val input: LocalRef[T] = fb.getArg[T](1)
-  val region: StagedMemoryBuffer = new StagedMemoryBuffer(fb.getArg[MemoryBuffer](2))
-  val startOffset: LocalRef[Long] = fb.newLocal[Long]
-  def getCurrentOffset: Code[Long] = region.size
-  def getFunctionBuilder: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]] = fb
+  var idx: LocalRef[Int] = _
+  var fieldOffsets: LocalRef[Array[Long]] = _
+  var elementsOffset: LocalRef[Long] = _
 
   var transform: AsmFunction2[T, MemoryBuffer, Long] = _
 
-  def start(t: Type): Code[Unit] = {
-    assert(!t.isInstanceOf[TArray], "use StagedArrayBuilder for t of type TArray!")
-    assert(!t.isInstanceOf[TStruct], "use StagedStructBuilder for t of type TStruct!")
-    var c: Code[Unit] = _empty
-    t.fundamentalType match {
+  val startOffset: LocalRef[Long] = fb.newLocal[Long]
+  val endOffset: Code[Long] = region.size
+
+  def start(): Code[Unit] = {
+    assert(!rowType.isInstanceOf[TArray])
+    rowType.fundamentalType match {
+      case _: TStruct => start(true)
       case TBinary =>
-        c = Code(
-          region.align(TBinary.contentAlignment),
-          startOffset.store(region.offset)
-        )
-      case _ =>
-        c = Code(region.align(t.alignment),
-          startOffset.store(region.allocate(t.byteSize))
-        )
+        assert (parent == null)
+        _empty[Unit]
+      case _ => Code(
+        region.align(rowType.alignment),
+        startOffset.store(region.allocate(rowType.byteSize)),
+        currentOffset.store(startOffset)
+      )
+    }
+  }
+
+  def start(length: Code[Int], init: Boolean = true): Code[Unit] = {
+    val t = rowType.asInstanceOf[TArray]
+    idx = fb.newLocal[Int]
+    elementsOffset = fb.newLocal[Long]
+    var c = Code(
+        region.align(t.contentsAlignment),
+        startOffset.store(region.allocate(t.contentsByteSize(length)))
+    )
+    if (parent != null) {
+      c = Code(c, region.storeAddress(currentOffset, startOffset))
+    }
+    c = Code(c, currentOffset.store(startOffset.load() + t.elementsOffset(length)))
+    if (init)
+      c = Code(c, t.initialize(region, startOffset.load(), length, idx))
+    Code(c, idx.store(0))
+  }
+
+  def start(init: Boolean): Code[Unit] = {
+    val t = rowType.asInstanceOf[TStruct]
+    idx = fb.newLocal[Int]
+    fieldOffsets = fb.newLocal[Array[Long]]
+    var c = if (parent == null)
+      Code(
+        region.align(t.alignment),
+        startOffset.store(region.allocate(t.byteSize)),
+        currentOffset.store(startOffset)
+      )
+    else
+      startOffset.store(currentOffset)
+    if (init)
+      c = Code(c,t.clearMissingBits(region, startOffset.load()))
+    c = Code(c,
+      idx.store(0),
+      fieldOffsets.store(Code.newArray[Long](t.size))
+    )
+    for (i <- 0 until t.size) {
+      c = Code(c, fieldOffsets.load().update(i, startOffset.load() + t.byteOffsets(i)))
     }
     c
   }
 
-  def advance(): Code[Unit] = {
-    assert(false)
-    _empty
+  def setMissing(): Code[Unit] = {
+    Code(
+      rowType match {
+        case t: TArray => t.setElementMissing(region, startOffset, idx)
+        case t: TStruct => t.setFieldMissing(region, startOffset, idx)
+      },
+      advance()
+    )
+  }
+
+  def addInt32(v: Code[Int]): Code[Unit] = {
+    Code(
+      region.storeInt32(currentOffset, v),
+      advance()
+    )
+  }
+
+  def addBinary(bytes: Code[Array[Byte]]): Code[Unit] = {
+    Code(
+      region.align(TBinary.contentAlignment),
+      if (rowType == TBinary) {
+        Code(
+          startOffset.store(endOffset),
+          currentOffset.store(startOffset)
+        )
+      } else region.storeAddress(currentOffset,endOffset),
+      region.appendInt32(bytes.length()),
+      region.appendBytes(bytes),
+      advance()
+    )
+  }
+
+  def addString(str: Code[String]): Code[Unit] = addBinary(str.invoke[Array[Byte]]("getBytes"))
+
+  def addArray(t: TArray, f: (StagedRegionValueBuilder[T] => Code[Unit])): Code[Unit] = Code(f(new StagedRegionValueBuilder[T](fb, t, this)), advance())
+
+  def addStruct(t: TStruct, f: (StagedRegionValueBuilder[T] => Code[Unit])): Code[Unit] = Code(f(new StagedRegionValueBuilder[T](fb, t, this)), advance())
+
+  private def advance(): Code[Unit] = {
+    rowType match {
+      case t: TArray => Code(
+        idx.store(idx.load() + 1),
+        currentOffset.store(elementsOffset.load() + (idx.toL * t.elementByteSize))
+      )
+      case t: TStruct => Code(
+        idx.store(idx.load() + 1),
+        currentOffset.store(fieldOffsets.load()(idx))
+      )
+      case _ => _empty[Unit]
+    }
   }
 
   def build() {
-//    fb.emit(getCode)
-    fb.emit(_return(startOffset))
+    emit(_return(startOffset))
     transform = fb.result()()
   }
 
-  def emit(c: Code[_]) {
-    fb.emit(c)
-  }
+  def emit(c: Code[_]) {fb.emit(c)}
 
   def emit(cs: Array[Code[_]]) {
     for (c <- cs) {
       fb.emit(c)
     }
   }
-
-  def newArray(t: TArray): StagedArrayBuilder[T] = {
-    new StagedArrayBuilder(fb, t)
-  }
-
-  def startArray(srvb: StagedArrayBuilder[T], length: Code[Int]): Code[Unit] = {
-    _empty
-  }
-
-  def endArray(): Code[Unit] = {
-    _empty
-  }
-
-  def newStruct(t: TStruct): StagedStructBuilder[T] = {
-    new StagedStructBuilder(fb, t)
-  }
-
-  def startStruct(srvb: StagedStructBuilder[T]) : Code[Unit] = {
-    _empty
-  }
-
-  def endStruct() : Code[Unit] = {
-    _empty
-  }
-
-
-  def addInt32(v: Code[Int]): Code[Unit] = {
-    region.storeInt32(startOffset.load(), v)
-  }
-
-  def addBinary(bytes: Code[Array[Byte]]): Code[Unit] = {
-    Code(
-      region.appendInt32(bytes.length()),
-      region.appendBytes(bytes)
-    )
-  }
-
-  def addString(str: Code[String]): Code[Unit] = {
-    addBinary(str.invoke[Array[Byte]]("getBytes"))
-  }
 }
 
-class StagedMemoryBuffer(region: Code[MemoryBuffer]) {
+class RichCodeMemoryBuffer(val region: Code[MemoryBuffer]) extends AnyVal {
 
   def get: Code[MemoryBuffer] = region
-
-  def mem: Code[Long] = region.get[Long]("mem")
 
   def size: Code[Long] = region.invoke[Long]("size")
 

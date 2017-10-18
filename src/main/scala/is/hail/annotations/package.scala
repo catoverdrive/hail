@@ -1,5 +1,8 @@
 package is.hail
 
+import is.hail.asm4s.Code
+import scala.language.implicitConversions
+
 package object annotations {
 
   class AnnotationPathException(msg: String = "") extends Exception(msg)
@@ -17,4 +20,6 @@ package object annotations {
   type Merger = (Annotation, Annotation) => Annotation
 
   type Filterer = (Annotation) => Annotation
+
+  implicit def toRichCodeMemoryBuffer(region: Code[MemoryBuffer]): RichCodeMemoryBuffer = new RichCodeMemoryBuffer(region)
 }

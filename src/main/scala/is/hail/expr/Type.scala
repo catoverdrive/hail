@@ -692,7 +692,7 @@ abstract class TContainer extends Type {
     region.setBit(aoff + 4, i)
   }
 
-  def setElementMissing(region: StagedMemoryBuffer, aoff: Code[Long], i: Code[Int]): Code[Unit] = {
+  def setElementMissing(region: Code[MemoryBuffer], aoff: Code[Long], i: Code[Int]): Code[Unit] = {
     region.setBit(aoff + 4L, i.toL)
   }
 
@@ -732,15 +732,14 @@ abstract class TContainer extends Type {
     clearMissingBits(region, aoff, length)
   }
 
-  def initialize(region: StagedMemoryBuffer, aoff: Code[Long], length: Code[Int], a: LocalRef[Int], b: LocalRef[Int]): Code[Unit] = {
+  def initialize(region: Code[MemoryBuffer], aoff: Code[Long], length: Code[Int], a: LocalRef[Int]): Code[Unit] = {
     Code(
       region.storeInt32(aoff, length),
-      b.store((length + 7) / 8),
-      a.store(0),
-      Code.whileLoop(a < b,
+      a.store((length + 7) / 8),
+      Code.whileLoop(a > 0,
         Code(
-          region.storeByte(aoff + 4L + a.toL, const(0).toB),
-          a.store(a + 1)
+          a.store(a - 1),
+          region.storeByte(aoff + 4L + a.toL, const(0).toB)
         )
       )
     )
@@ -1931,7 +1930,7 @@ final case class TStruct(fields: IndexedSeq[Field]) extends Type {
     }
   }
 
-  def clearMissingBits(region: StagedMemoryBuffer, off: Code[Long]): Code[Unit] = {
+  def clearMissingBits(region: Code[MemoryBuffer], off: Code[Long]): Code[Unit] = {
     var c: Code[Unit] = Code._empty
     val nMissingBytes = (size + 7) / 8
     var i = 0
@@ -1949,7 +1948,7 @@ final case class TStruct(fields: IndexedSeq[Field]) extends Type {
     region.setBit(offset, fieldIdx)
   }
 
-  def setFieldMissing(region: StagedMemoryBuffer, offset: Code[Long], fieldIdx: Code[Int]): Code[Unit] = {
+  def setFieldMissing(region: Code[MemoryBuffer], offset: Code[Long], fieldIdx: Code[Int]): Code[Unit] = {
     region.setBit(offset, fieldIdx.toL)
   }
 

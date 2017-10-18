@@ -24,18 +24,18 @@ final class StagedDecoder(val dec: Decoder) extends AnyVal {
 //      case TFloat32 => srvb.addFloat32(srvb.input.invoke[Int]("readFloat"))
 //      case TFloat64 => srvb.addFloat64(srvb.input.invoke[Int]("readDouble"))
       case TBinary => Code(
-        srvb.input.invoke[MemoryBuffer, Long, Unit]("readBinary", srvb.region.get, srvb.getCurrentOffset),
+        srvb.input.invoke[MemoryBuffer, Long, Unit]("readBinary", srvb.region.get, srvb.currentOffset),
         srvb.advance()
       )
     }
   }
 
-  private def storeStruct(srvb: StagedStructBuilder[Decoder]): Code[Unit] = {
-    val t = srvb.getType
-    val fb = srvb.getFunctionBuilder
+  private def storeStruct(srvb: StagedRegionValueBuilder[Decoder]): Code[Unit] = {
+    val t = srvb.rowType.asInstanceOf[TStruct]
+    val fb = srvb.fb
 
     val codeDec: LocalRef[Decoder] = srvb.input
-    val region: StagedMemoryBuffer = srvb.region
+    val region: Code[MemoryBuffer] = srvb.region
 
     var c = codeDec.invoke[MemoryBuffer, Long, Int, Unit]("readBytes", region.get, srvb.startOffset, (t.size + 7) / 8)
     var i = 0

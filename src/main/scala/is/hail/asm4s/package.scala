@@ -273,6 +273,10 @@ package object asm4s {
     def emit(il: Growable[AbstractInsnNode]) = c.emit(il)
   })
 
+  implicit def byteToCodeInt2(c: Code[Byte]): Code[Int] = new Code[Int] {
+    def emit(il: Growable[AbstractInsnNode]) = c.emit(il)
+  }
+
   implicit def toCodeLong(c: Code[Long]): CodeLong = new CodeLong(c)
 
   implicit def toCodeFloat(c: Code[Float]): CodeFloat = new CodeFloat(c)

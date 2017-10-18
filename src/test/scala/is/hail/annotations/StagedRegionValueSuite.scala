@@ -14,9 +14,9 @@ class StagedRegionValueSuite extends SparkSuite {
   @Test def testString() {
     val rt = TString
     val input = "hello"
-    val srvb = new StagedRegionValueBuilder[String](FunctionBuilder.functionBuilder[String, MemoryBuffer, Long])
+    val srvb = new StagedRegionValueBuilder[String](FunctionBuilder.functionBuilder[String, MemoryBuffer, Long], rt)
 
-    srvb.emit(srvb.start(rt))
+    srvb.emit(srvb.start())
     srvb.emit(srvb.addString(srvb.input))
     srvb.build()
 
@@ -49,9 +49,9 @@ class StagedRegionValueSuite extends SparkSuite {
   @Test def testInt() {
     val rt = TInt32
     val input = 3
-    val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long])
+    val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], rt)
 
-    srvb.emit(srvb.start(rt))
+    srvb.emit(srvb.start())
     srvb.emit(srvb.addInt32(srvb.input))
     srvb.build()
 
@@ -84,7 +84,7 @@ class StagedRegionValueSuite extends SparkSuite {
   @Test def testArray() {
     val rt = TArray(TInt32)
     val input = 3
-    val srvb = new StagedArrayBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], TArray(TInt32))
+    val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], TArray(TInt32))
 
     srvb.emit(
       Array[Code[_]](
@@ -129,9 +129,15 @@ class StagedRegionValueSuite extends SparkSuite {
     val input = "hello"
     val fb = FunctionBuilder.functionBuilder[String, MemoryBuffer, Long]
     val i = fb.newLocal[Int]()
-    val srvb = new StagedArrayBuilder[String](fb, rt)
+    val srvb = new StagedRegionValueBuilder[String](fb, rt)
 
-    val ssb = srvb.newStruct(rt.elementType.asInstanceOf[TStruct])
+    val struct = { ssb: StagedRegionValueBuilder[String] =>
+      Code(
+        ssb.start(),
+        ssb.addInt32(i),
+        ssb.addString(ssb.input)
+      )
+    }
 
     srvb.emit(
       Array[Code[_]](
@@ -139,10 +145,7 @@ class StagedRegionValueSuite extends SparkSuite {
         srvb.start(2),
         Code.whileLoop(i <= 2,
           Code(
-            srvb.startStruct(ssb),
-            ssb.addInt32(i),
-            ssb.addString(ssb.input),
-            srvb.endStruct(),
+            srvb.addStruct(rt.elementType.asInstanceOf[TStruct], struct),
             i.store(i + 1)
           )
         )
@@ -190,23 +193,26 @@ class StagedRegionValueSuite extends SparkSuite {
     val input = "hello"
     val fb = FunctionBuilder.functionBuilder[String, MemoryBuffer, Long]
     val i = fb.newLocal[Int]()
-    val srvb = new StagedStructBuilder[String](fb, rt)
+    val srvb = new StagedRegionValueBuilder[String](fb, rt)
 
-    val sab = srvb.newArray(rt.field("b").typ.asInstanceOf[TArray])
-
-    srvb.emit(
-      Array[Code[_]](
-        srvb.start(),
-        srvb.addString(srvb.input),
-        srvb.startArray(sab, 2),
+    val array = { sab: StagedRegionValueBuilder[String] =>
+      Code(
+        sab.start(2),
         i.store(1),
         Code.whileLoop(i <= 2,
           Code(
             sab.addInt32(i),
             i.store(i + 1)
           )
-        ),
-        srvb.endArray()
+        )
+      )
+    }
+
+    srvb.emit(
+      Array[Code[_]](
+        srvb.start(),
+        srvb.addString(srvb.input),
+        srvb.addArray(TArray(TInt32), array)
       )
     )
 
@@ -249,7 +255,7 @@ class StagedRegionValueSuite extends SparkSuite {
   @Test def testMissingArray() {
     val rt = TArray(TInt32)
     val input = 3
-    val srvb = new StagedArrayBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], rt)
+    val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], rt)
 
     srvb.emit(
       Array[Code[_]](
