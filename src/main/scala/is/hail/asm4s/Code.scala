@@ -253,23 +253,47 @@ class CodeBoolean(val lhs: Code[Boolean]) extends AnyVal {
     }
   }
 
-  def &&(rhs: Code[Boolean]): Code[Boolean] =
+  def &(rhs: Code[Boolean]): Code[Boolean] =
     Code(lhs, rhs, new InsnNode(IAND))
 
-  def scAND(rhs: Code[Boolean]): Code[Boolean] =
-    lhs.mux(
-      rhs,
-      false
-    )
+  def &&(rhs: Code[Boolean]): Code[Boolean] = {
+    new Code[Boolean] {
+      def emit(il: Growable[AbstractInsnNode]) {
+        val lfalse = new LabelNode()
+        val lafter = new LabelNode()
+        lhs.emit(il)
+        il += new JumpInsnNode(IFEQ, lfalse)
+        rhs.emit(il)
+        il += new JumpInsnNode(IFEQ, lfalse)
+        il += new LdcInsnNode(1)
+        il += new JumpInsnNode(GOTO, lafter)
+        il += lfalse
+        il += new LdcInsnNode(0)
+        il += lafter
+      }
+    }
+  }
 
-  def ||(rhs: Code[Boolean]): Code[Boolean] =
+  def |(rhs: Code[Boolean]): Code[Boolean] =
     Code(lhs, rhs, new InsnNode(IOR))
 
-  def scOR(rhs: Code[Boolean]): Code[Boolean] =
-    lhs.unary_!().mux(
-      false,
-      rhs
-    )
+  def ||(rhs: Code[Boolean]): Code[Boolean] =
+    new Code[Boolean] {
+      def emit(il: Growable[AbstractInsnNode]) {
+        val ltrue = new LabelNode()
+        val lafter = new LabelNode()
+        lhs.emit(il)
+        il += new JumpInsnNode(IFNE, ltrue)
+        rhs.emit(il)
+        il += new JumpInsnNode(IFNE, ltrue)
+        il += new LdcInsnNode(0)
+        il += new JumpInsnNode(GOTO, lafter)
+        il += ltrue
+        il += new LdcInsnNode(1)
+        il += lafter
+      }
+    }
+
 }
 
 class CodeInt(val lhs: Code[Int]) extends AnyVal {

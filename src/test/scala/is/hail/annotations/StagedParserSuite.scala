@@ -21,7 +21,7 @@ class StagedParserSuite extends SparkSuite {
   def getNextString(s: Code[Array[Byte]], sep: Code[Byte], firstoffset: LocalRef[Int], offset: LocalRef[Int]): Code[String] = {
     Code(
       offset.store(firstoffset),
-      whileLoop(offset < s.length() scAND s(offset).cne(sep),
+      whileLoop(offset < s.length() && s(offset).cne(sep),
         offset.store(offset + 1)
       ),
       Code.newInstance[String, Array[Byte], Int, Int](s, firstoffset, offset - firstoffset)
@@ -40,7 +40,7 @@ class StagedParserSuite extends SparkSuite {
         offset.store(offset + 1),
         _empty[Unit]
       ),
-      whileLoop(offset < s.length() scAND s(offset).cne(sep),
+      whileLoop(offset < s.length() && s(offset).cne(sep),
         Code(
           ((s(offset) <= '9'.toInt) && (s(offset) >= '0'.toInt)).mux(
             Code(
@@ -62,7 +62,7 @@ class StagedParserSuite extends SparkSuite {
   def isMissing(s: Code[Array[Byte]], isMissing: Code[Array[Byte]], sep: Code[Byte], firstoffset: LocalRef[Int], offset: LocalRef[Int]): Code[Boolean] = {
     Code(
       offset.store(firstoffset),
-      whileLoop(offset - firstoffset < isMissing.length() scAND s(offset).ceq(isMissing(offset - firstoffset)),
+      whileLoop(offset - firstoffset < isMissing.length() && s(offset).ceq(isMissing(offset - firstoffset)),
         offset.store(offset + 1)
       ),
       ((offset - firstoffset).ceq(isMissing.length()) && s(offset).ceq(sep)).mux(
