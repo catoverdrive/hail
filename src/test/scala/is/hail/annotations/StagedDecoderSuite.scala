@@ -61,10 +61,10 @@ class StagedDecoderSuite extends SparkSuite {
     if (staged) {
       t match {
         case t2: TArray =>
-          val readArray = dec.getArrayReader(t2, region2)
+          val readArray = dec.getArrayReader(t2)
           rv2.setOffset(readArray(region2))
         case t2: TStruct =>
-          val readStruct = dec.getStructReader(t2, region2)
+          val readStruct = dec.getStructReader(t2)
           rv2.setOffset(readStruct(region2))
       }
     } else {
@@ -165,7 +165,7 @@ class StagedDecoderSuite extends SparkSuite {
 
 
     val dec2 = new Decoder()
-    val readStruct = dec2.getStructReader(t, region2)
+    val readStruct = dec2.getStructReader(t)
 
     val start2 = System.nanoTime()
     for (i <- 0 until nIter) {
@@ -216,7 +216,7 @@ class StagedDecoderSuite extends SparkSuite {
 
 
     val dec2 = new Decoder()
-    val readStruct = dec2.getArrayReader(t, region2)
+    val readStruct = dec2.getArrayReader(t)
 
     val start2 = System.nanoTime()
     for (i <- 0 until nIter) {

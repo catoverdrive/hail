@@ -75,8 +75,7 @@ class StagedParserSuite extends SparkSuite {
   def getStagedMatrixLines(input: Array[String], nSamples: Int, seperator: String, missingValue: String): Array[String] = {
     val rt = TStruct("a"->TString, "b"-> TArray(TInt32))
     val fb = FunctionBuilder.functionBuilder[String, MemoryBuffer, Long]
-    val srvb = new StagedStructBuilder[String](fb, rt)
-    val sab = srvb.newArray(TArray(TInt32))
+    val srvb = new StagedRegionValueBuilder[String](fb, rt)
 
     val line = fb.newLocal[Array[Byte]]
     val firstoff = fb.newLocal[Int]
@@ -95,27 +94,30 @@ class StagedParserSuite extends SparkSuite {
         firstoff.store(0),
         srvb.addString(getNextString(line, sep, firstoff, offset)),
         firstoff.store(offset+1),
-        srvb.startArray(sab,nSamples),
-        whileLoop(sab.i < nSamples,
-          (firstoff >= line.length()).mux(
-            throwMsg("found fewer samples than expected."),
-            Code(
-              isMissing(line, missingVal, sep, firstoff, offset).mux(
-                sab.setMissing(),
+        srvb.addArray(TArray(TInt32), { sab: StagedRegionValueBuilder[String] =>
+          Code(
+            sab.start(nSamples),
+            whileLoop(sab.idx < nSamples,
+              (firstoff >= line.length()).mux(
+                throwMsg("found fewer samples than expected."),
                 Code(
-                  getNextInt(line, sep, firstoff, offset, v),
-                  sab.addInt32(v)
+                  isMissing(line, missingVal, sep, firstoff, offset).mux(
+                    sab.setMissing(),
+                    Code(
+                      getNextInt(line, sep, firstoff, offset, v),
+                      sab.addInt32(v)
+                    )
+                  ),
+                  firstoff.store(offset + 1)
                 )
-              ),
-              firstoff.store(offset+1)
+              )
+            ),
+            (firstoff < line.length()).mux(
+              throwMsg("found more data than expected"),
+              _empty
             )
           )
-        ),
-        (firstoff < line.length()).mux(
-          throwMsg("found more data than expected"),
-          _empty
-        ),
-        srvb.endArray()
+        })
       )
     )
 

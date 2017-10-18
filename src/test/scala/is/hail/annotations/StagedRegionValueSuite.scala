@@ -9,9 +9,10 @@ import org.testng.annotations.Test
 
 class StagedRegionValueSuite extends SparkSuite {
 
-  val showRVInfo = false
+  val showRVInfo = true
 
-  @Test def testString() {
+  @Test
+  def testString() {
     val rt = TString
     val input = "hello"
     val srvb = new StagedRegionValueBuilder[String](FunctionBuilder.functionBuilder[String, MemoryBuffer, Long], rt)
@@ -46,7 +47,8 @@ class StagedRegionValueSuite extends SparkSuite {
     assert(rv.offset == rv2.offset)
   }
 
-  @Test def testInt() {
+  @Test
+  def testInt() {
     val rt = TInt32
     val input = 3
     val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], rt)
@@ -81,7 +83,8 @@ class StagedRegionValueSuite extends SparkSuite {
     assert(rv.offset == rv2.offset)
   }
 
-  @Test def testArray() {
+  @Test
+  def testArray() {
     val rt = TArray(TInt32)
     val input = 3
     val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], TArray(TInt32))
@@ -124,7 +127,8 @@ class StagedRegionValueSuite extends SparkSuite {
 
   }
 
-  @Test def testArrayOfStruct() {
+  @Test
+  def testArrayOfStruct() {
     val rt = TArray(TStruct("a"->TInt32, "b"->TString))
     val input = "hello"
     val fb = FunctionBuilder.functionBuilder[String, MemoryBuffer, Long]
@@ -188,7 +192,8 @@ class StagedRegionValueSuite extends SparkSuite {
 
   }
 
-  @Test def testStructWithArray() {
+  @Test
+  def testStructWithArray() {
     val rt = TStruct("a"->TString, "b"->TArray(TInt32))
     val input = "hello"
     val fb = FunctionBuilder.functionBuilder[String, MemoryBuffer, Long]
@@ -252,7 +257,8 @@ class StagedRegionValueSuite extends SparkSuite {
     assert(rv.offset == rv2.offset)
   }
 
-  @Test def testMissingArray() {
+  @Test
+  def testMissingArray() {
     val rt = TArray(TInt32)
     val input = 3
     val srvb = new StagedRegionValueBuilder[Int](FunctionBuilder.functionBuilder[Int, MemoryBuffer, Long], rt)

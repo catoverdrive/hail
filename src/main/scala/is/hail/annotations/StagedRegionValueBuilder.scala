@@ -7,17 +7,14 @@ import is.hail.expr._
 import is.hail.utils._
 import scala.reflect.ClassTag
 
-class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], val rowType: Type, var region: Code[MemoryBuffer], var currentOffset: LocalRef[Long])(implicit tti: TypeInfo[T]) {
+class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], val rowType: Type, var region: Code[MemoryBuffer], val pOffset: Code[Long])(implicit tti: TypeInfo[T]) {
 
   private def this(fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], rowType: Type, parent: StagedRegionValueBuilder[T])(implicit tti: TypeInfo[T]) = {
     this(fb, rowType, parent.region, parent.currentOffset)
-    this.parent = parent
   }
   def this(fb: FunctionBuilder[AsmFunction2[T, MemoryBuffer, Long]], rowType: Type)(implicit tti: TypeInfo[T]) = {
-    this(fb, rowType, fb.getArg[MemoryBuffer](2), fb.newLocal[Long])
+    this(fb, rowType, fb.getArg[MemoryBuffer](2), null)
   }
-
-  var parent: StagedRegionValueBuilder[T] = _
 
   val input: LocalRef[T] = fb.getArg[T](1)
   var idx: LocalRef[Int] = _
@@ -29,17 +26,24 @@ class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[
   val startOffset: LocalRef[Long] = fb.newLocal[Long]
   val endOffset: Code[Long] = region.size
 
+  def currentOffset: Code[Long] = {
+    rowType match {
+      case _: TStruct => fieldOffsets.load()(idx)
+      case t: TArray => elementsOffset.load() + (idx.toL * t.elementByteSize)
+      case _ => startOffset
+    }
+  }
+
   def start(): Code[Unit] = {
     assert(!rowType.isInstanceOf[TArray])
     rowType.fundamentalType match {
       case _: TStruct => start(true)
       case TBinary =>
-        assert (parent == null)
-        _empty[Unit]
+        assert (pOffset == null)
+        startOffset.store(endOffset)
       case _ => Code(
         region.align(rowType.alignment),
-        startOffset.store(region.allocate(rowType.byteSize)),
-        currentOffset.store(startOffset)
+        startOffset.store(region.allocate(rowType.byteSize))
       )
     }
   }
@@ -52,12 +56,12 @@ class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[
         region.align(t.contentsAlignment),
         startOffset.store(region.allocate(t.contentsByteSize(length)))
     )
-    if (parent != null) {
-      c = Code(c, region.storeAddress(currentOffset, startOffset))
+    if (pOffset != null) {
+      c = Code(c, region.storeAddress(pOffset, startOffset))
     }
-    c = Code(c, currentOffset.store(startOffset.load() + t.elementsOffset(length)))
     if (init)
       c = Code(c, t.initialize(region, startOffset.load(), length, idx))
+    c = Code(c, elementsOffset.store(startOffset.load() + t.elementsOffset(length)))
     Code(c, idx.store(0))
   }
 
@@ -65,14 +69,13 @@ class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[
     val t = rowType.asInstanceOf[TStruct]
     idx = fb.newLocal[Int]
     fieldOffsets = fb.newLocal[Array[Long]]
-    var c = if (parent == null)
+    var c = if (pOffset == null)
       Code(
         region.align(t.alignment),
-        startOffset.store(region.allocate(t.byteSize)),
-        currentOffset.store(startOffset)
+        startOffset.store(region.allocate(t.byteSize))
       )
     else
-      startOffset.store(currentOffset)
+      startOffset.store(pOffset)
     if (init)
       c = Code(c,t.clearMissingBits(region, startOffset.load()))
     c = Code(c,
@@ -105,12 +108,11 @@ class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[
   def addBinary(bytes: Code[Array[Byte]]): Code[Unit] = {
     Code(
       region.align(TBinary.contentAlignment),
-      if (rowType == TBinary) {
-        Code(
-          startOffset.store(endOffset),
-          currentOffset.store(startOffset)
-        )
-      } else region.storeAddress(currentOffset,endOffset),
+      rowType.fundamentalType match {
+        case TBinary => _empty
+        case _ =>
+          region.storeAddress(currentOffset,endOffset)
+      },
       region.appendInt32(bytes.length()),
       region.appendBytes(bytes),
       advance()
@@ -123,16 +125,10 @@ class StagedRegionValueBuilder[T] private (val fb: FunctionBuilder[AsmFunction2[
 
   def addStruct(t: TStruct, f: (StagedRegionValueBuilder[T] => Code[Unit])): Code[Unit] = Code(f(new StagedRegionValueBuilder[T](fb, t, this)), advance())
 
-  private def advance(): Code[Unit] = {
+  def advance(): Code[Unit] = {
     rowType match {
-      case t: TArray => Code(
-        idx.store(idx.load() + 1),
-        currentOffset.store(elementsOffset.load() + (idx.toL * t.elementByteSize))
-      )
-      case t: TStruct => Code(
-        idx.store(idx.load() + 1),
-        currentOffset.store(fieldOffsets.load()(idx))
-      )
+      case _: TArray => idx.store(idx.load() + 1)
+      case _: TStruct => idx.store(idx.load() + 1)
       case _ => _empty[Unit]
     }
   }

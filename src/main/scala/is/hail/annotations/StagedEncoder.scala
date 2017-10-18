@@ -4,6 +4,7 @@ import is.hail.asm4s._
 import is.hail.asm4s.Code._
 import is.hail.expr._
 import is.hail.utils._
+import scala.language.implicitConversions
 
 class StagedEncoder {
 
@@ -37,28 +38,22 @@ final class StagedDecoder(val dec: Decoder) extends AnyVal {
     val codeDec: LocalRef[Decoder] = srvb.input
     val region: Code[MemoryBuffer] = srvb.region
 
-    var c = codeDec.invoke[MemoryBuffer, Long, Int, Unit]("readBytes", region.get, srvb.startOffset, (t.size + 7) / 8)
+    var c = Code(
+      srvb.start(),
+      codeDec.invoke[MemoryBuffer, Long, Int, Unit]("readBytes", region.get, srvb.startOffset, (t.size + 7) / 8)
+    )
     var i = 0
     while (i < t.size) {
       c = Code(c,
         region.loadBit(srvb.startOffset,const(i).toL).mux(
           srvb.advance(),
           t.fieldType(i) match {
-            case t2: TStruct =>
-              val ssb = srvb.newStruct(t2)
-              Code(
-                srvb.startStruct(ssb),
-                storeStruct(ssb),
-                srvb.endStruct()
-              )
+            case t2: TStruct => srvb.addStruct(t2, storeStruct)
             case t2: TArray =>
-              val sab = srvb.newArray(t2)
               val length: LocalRef[Int] = fb.newLocal[Int]
               Code(
                 length := codeDec.invoke[Int]("readInt"),
-                srvb.startArray(sab, length),
-                storeArray(sab, length),
-                srvb.endArray()
+                srvb.addArray(t2, sab => storeArray(sab, length))
               )
             case _ => storeType(t.fieldType(i), srvb)
           }
@@ -69,45 +64,42 @@ final class StagedDecoder(val dec: Decoder) extends AnyVal {
     c
   }
 
-  private def storeArray(srvb: StagedArrayBuilder[Decoder], length: Code[Int]): Code[Unit] = {
+  private def storeArray(srvb: StagedRegionValueBuilder[Decoder], length: LocalRef[Int]): Code[Unit] = {
 
-    val t = srvb.getType
-    val fb = srvb.getFunctionBuilder
+    val t = srvb.rowType.asInstanceOf[TArray]
+    val fb = srvb.fb
 
     val codeDec: LocalRef[Decoder] = srvb.input
-    val region: StagedMemoryBuffer = srvb.region
+    val region: Code[MemoryBuffer] = srvb.region
 
-    val c = codeDec.invoke[MemoryBuffer, Long, Int, Unit]("readBytes", region.get, srvb.startOffset + 4L, (length + 7) / 8)
+    val c = Code(
+      srvb.start(length),
+      codeDec.invoke[MemoryBuffer, Long, Int, Unit]("readBytes", region.get, srvb.startOffset + 4L, (length + 7) / 8)
+    )
     val d = t.elementType match {
       case t2: TArray =>
-        val sab = new StagedArrayBuilder[Decoder](fb, t2)
-        val length: LocalRef[Int] = sab.getFunctionBuilder.newLocal[Int]
-        whileLoop(srvb.i < length,
-          region.loadBit(srvb.startOffset + 4L, srvb.i.toL).mux(
+        val sab = new StagedRegionValueBuilder[Decoder](fb, t2)
+        val length: LocalRef[Int] = srvb.fb.newLocal[Int]
+        whileLoop(srvb.idx < length,
+          region.loadBit(srvb.startOffset + 4L, srvb.idx.toL).mux(
             srvb.advance(),
             Code(
               length := codeDec.invoke[Int]("readInt"),
-              srvb.startArray(sab, length),
-              storeArray(sab, length),
-              srvb.endArray()
+              srvb.addArray(t2, sab => storeArray(sab, length))
             )
           )
         )
       case t2: TStruct =>
-        val ssb = new StagedStructBuilder[Decoder](fb, t2)
-        whileLoop(srvb.i < length,
-          region.loadBit(srvb.startOffset + 4L, srvb.i.toL).mux(
+        val ssb = new StagedRegionValueBuilder[Decoder](fb, t2)
+        whileLoop(srvb.idx < length,
+          region.loadBit(srvb.startOffset + 4L, srvb.idx.toL).mux(
             srvb.advance(),
-            Code(
-              srvb.startStruct(ssb),
-              storeStruct(ssb),
-              srvb.endStruct()
-            )
+            srvb.addStruct(t2, storeStruct)
           )
         )
       case _ =>
-        whileLoop(srvb.i < length,
-          region.loadBit(srvb.startOffset + 4L, srvb.i.toL).mux(
+        whileLoop(srvb.idx < length,
+          region.loadBit(srvb.startOffset + 4L, srvb.idx.toL).mux(
             srvb.advance(),
             storeType(t.elementType, srvb)
           )
@@ -116,36 +108,35 @@ final class StagedDecoder(val dec: Decoder) extends AnyVal {
     Code(c,d)
   }
 
-  def getArrayReader(t: TArray, region: MemoryBuffer): (MemoryBuffer => Long) = {
+  def getArrayReader(t: TArray): (MemoryBuffer => Long) = {
 
-    val srvb = new StagedArrayBuilder[Decoder](FunctionBuilder.functionBuilder[Decoder, MemoryBuffer, Long], t)
-    val length: LocalRef[Int] = srvb.getFunctionBuilder.newLocal[Int]
+    val srvb = new StagedRegionValueBuilder[Decoder](FunctionBuilder.functionBuilder[Decoder, MemoryBuffer, Long], t)
+    val length: LocalRef[Int] = srvb.fb.newLocal[Int]
 
     srvb.emit(
       Code(
         length := srvb.input.invoke[Int]("readInt"),
-        srvb.start(length),
         storeArray(srvb, length)
       )
     )
-
     srvb.build()
     (r: MemoryBuffer) => srvb.transform(dec, r)
   }
 
-  def getStructReader(t: TStruct, region: MemoryBuffer): (MemoryBuffer => Long) = {
+  def getStructReader(t: TStruct): (MemoryBuffer => Long) = {
 
-    val srvb = new StagedStructBuilder[Decoder](FunctionBuilder.functionBuilder[Decoder, MemoryBuffer, Long], t)
+    val srvb = new StagedRegionValueBuilder[Decoder](FunctionBuilder.functionBuilder[Decoder, MemoryBuffer, Long], t)
 
-    srvb.emit(
-      Code(
-        srvb.start(),
-        storeStruct(srvb)
-      )
-    )
-
+    srvb.emit(storeStruct(srvb))
     srvb.build()
     (r: MemoryBuffer) => srvb.transform(dec, r)
+  }
+
+  def getRegionValueReader(t: Type): (MemoryBuffer => Long) = {
+    t.fundamentalType match {
+      case t2: TArray => getArrayReader(t2)
+      case t2: TStruct => getStructReader(t2)
+    }
   }
 
 }
