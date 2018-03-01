@@ -2,7 +2,9 @@ package is.hail.expr.ir
 
 import is.hail.expr.types._
 import is.hail.expr.BaseIR
+import is.hail.expr.ir.functions.IRFunction
 import is.hail.utils._
+
 import scala.util.hashing.MurmurHash3
 
 sealed trait IR extends BaseIR {
@@ -65,3 +67,5 @@ final case class In(i: Int, var typ: Type) extends IR
 final case class InMissingness(i: Int) extends IR { val typ: Type = TBoolean() }
 // FIXME: should be type any
 final case class Die(message: String) extends IR { val typ = TVoid }
+
+final case class CodeFunction(implementation: IRFunction[_], args: Array[IR])
