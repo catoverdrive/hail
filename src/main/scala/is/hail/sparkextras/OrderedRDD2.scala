@@ -19,7 +19,9 @@ object OrderedDependency {
     if (!p2.rangeTree.probablyOverlaps(p2.pkType.ordering, partBounds))
       Seq.empty[Int]
     else {
+      assert(p2.pkType.typeCheck(partBounds.start), s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.start}")
       val start = p2.getPartitionPK(partBounds.start)
+      assert(p2.pkType.typeCheck(partBounds.end), s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.end}")
       val end = p2.getPartitionPK(partBounds.end)
       start to end
     }

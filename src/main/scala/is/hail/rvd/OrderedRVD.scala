@@ -21,6 +21,10 @@ class OrderedRVD private(
   val partitioner: OrderedRVDPartitioner,
   val rdd: RDD[RegionValue]) extends RVD with Serializable {
   self =>
+
+  assert(typ.kType.types.sameElements(partitioner.kType.types))
+  assert(typ.pkType.types.sameElements(partitioner.pkType.types))
+
   def rowType: TStruct = typ.rowType
 
   // should be totally generic, permitting any number of keys, but that requires more work
@@ -104,6 +108,13 @@ class OrderedRVD private(
         s"""Incompatible join keys.  Keys must have same length and types, in order:
            | Left key type: ${ lTyp.kType.toString }
            | Right key type: ${ rTyp.kType.toString }
+         """.stripMargin)
+
+    if (!lTyp.pkType.types.sameElements(rTyp.pkType.types))
+      fatal(
+        s"""Incompatible join partition keys.  Partition keys must have same length and types, in order:
+           | Left partition key type: ${ lTyp.kType.toString }
+           | Right partition key type: ${ rTyp.kType.toString }
          """.stripMargin)
 
     joinType match {
