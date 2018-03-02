@@ -35,21 +35,13 @@ class OrderedRVDPartitioner(
 
   val pkKFieldIdx: Array[Int] = partitionKey.map(n => kType.fieldIdx(n))
 
-  def region: Region = rangeBounds.region
-
-  def loadElement(i: Int): Long = rangeBoundsType.loadElement(region, rangeBounds.aoff, rangeBounds.length, i)
-
-  def loadStart(i: Int): Long = pkIntervalType.loadStart(region, loadElement(i))
-
-  def loadEnd(i: Int): Long = pkIntervalType.loadStart(region, loadElement(i))
-
   def minBound: Any = rangeBounds(0).asInstanceOf[Interval].start
   def maxBound: Any = rangeBounds(numPartitions - 1).asInstanceOf[Interval].end
 
   // if outside bounds, return min or max depending on location
   // pk: Annotation[pkType]
   def getPartitionPK(pk: Any): Int = {
-    assert(pkType.typeCheck(pk))
+    assert(pkType.typeCheck(pk), s"pkType: $pkType, $pk")
     val part = rangeTree.queryValues(pkType.ordering, pk)
     part match {
       case Array() =>
