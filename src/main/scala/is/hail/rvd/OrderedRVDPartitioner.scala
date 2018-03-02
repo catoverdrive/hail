@@ -41,14 +41,16 @@ class OrderedRVDPartitioner(
   // if outside bounds, return min or max depending on location
   // pk: Annotation[pkType]
   def getPartitionPK(pk: Any): Int = {
-    assert(pkType.typeCheck(pk), s"pkType: $pkType, $pk")
+    assert(pkType.typeCheck(pk))
     val part = rangeTree.queryValues(pkType.ordering, pk)
     part match {
       case Array() =>
         if (pkType.ordering.lt(pk, minBound))
           0
         else {
-          assert(pkType.ordering.gt(pk, maxBound))
+          info(s"pk: $pk")
+          info(s"rangeBounds: $rangeBounds")
+          assert(pkType.ordering.gt(pk, maxBound), s"pk: $pk; maxBound: $maxBound")
           numPartitions - 1
         }
 
