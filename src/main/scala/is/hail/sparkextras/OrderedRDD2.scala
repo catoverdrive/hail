@@ -20,8 +20,10 @@ object OrderedDependency {
       Seq.empty[Int]
     else {
       assert(p2.pkType.typeCheck(partBounds.start), s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.start}")
+      info(s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.start}")
       val start = p2.getPartitionPK(partBounds.start)
       assert(p2.pkType.typeCheck(partBounds.end), s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.end}")
+      info(s"p2.pkType: ${ p2.pkType }\n p1.pkType: ${ p1.pkType }\n partBound = ${partBounds.end}")
       val end = p2.getPartitionPK(partBounds.end)
       start to end
     }
