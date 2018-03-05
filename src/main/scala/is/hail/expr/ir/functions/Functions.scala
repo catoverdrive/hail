@@ -2,7 +2,7 @@ package is.hail.expr.ir.functions
 
 import java.io.Serializable
 
-import is.hail.asm4s.Code
+import is.hail.asm4s.{Code, FunctionBuilder}
 import is.hail.check.Gen
 import is.hail.expr.Parser
 import is.hail.expr.types._
@@ -24,8 +24,12 @@ object IRFunctionRegistry {
 object IRFunction {
   def apply[T](name: String, t: Type*)(impl: Array[Code[_]] => Code[T]): IRFunction[T] = {
     val f = new IRFunction[T] {
+      private var functionBuilder: FunctionBuilder[_] = null
+
       def types: Array[Type] = t.toArray
       def implementation: Array[Code[_]] => Code[T] = impl
+      def setFB(fb: FunctionBuilder[_]): Unit = { functionBuilder = fb }
+      def getFB: FunctionBuilder[_] = functionBuilder
     }
     IRFunctionRegistry.addFunction(name, f)
     f
@@ -36,4 +40,7 @@ abstract class IRFunction[T] {
   def types: Array[Type]
   def implementation: Array[Code[_]] => Code[T]
   def apply(args: Code[_]*): Code[T] = implementation(args.toArray)
+  def getFB: FunctionBuilder[_]
+  def setFB(fb: FunctionBuilder[_]): Unit
+  def returnType: Type = types.last
 }
