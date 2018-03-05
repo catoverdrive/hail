@@ -158,7 +158,7 @@ object Infer {
         assert(typ != null)
       case InMissingness(i) =>
       case Die(msg) =>
-      case x@CodeFunction(impl, args) =>
+      case x@CodeFunction(_, args) =>
         args.foreach(infer(_))
     }
   }

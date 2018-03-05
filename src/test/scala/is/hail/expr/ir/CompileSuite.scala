@@ -408,4 +408,20 @@ class CompileSuite {
     assert(tOut.isFieldDefined(region, outOff, tOut.fieldIdx("0")))
     assert(region.loadDouble(tOut.loadField(region, outOff, tOut.fieldIdx("0"))) === 8.0)
   }
+  @Test
+  def testCodeFunctionTriangle() {
+    val t = TStruct("x"->TInt32())
+    val region = Region()
+    val rvb = new RegionValueBuilder(region)
+    val ir = CodeFunction(functions.UtilFunctions.triangle, Array(GetField(In(0, t), "x")))
+    val fb = FunctionBuilder.functionBuilder[Region, Long, Boolean, Int]
+    doit(ir, fb)
+    val f = fb.result()()
+
+    rvb.start(t)
+    rvb.startStruct()
+    rvb.addInt(1)
+    rvb.endStruct()
+    assert(f(region, rvb.end(), false) == 1)
+  }
 }
