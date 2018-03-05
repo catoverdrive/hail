@@ -2,6 +2,7 @@ package is.hail.methods
 
 import is.hail.annotations._
 import is.hail.expr._
+import is.hail.expr.ir.{IR, InsertFields}
 import is.hail.expr.types._
 import is.hail.rvd.OrderedRVD
 import is.hail.utils._
@@ -36,6 +37,15 @@ class ExprAnnotator(val ec: EvalContext, t: TStruct, expr: String, head: Option[
     newA
   }
 }
+
+class EntryInserter(oldEntry: IR, fieldIRs: Array[(String, IR)]) extends Serializable {
+  val entryIR = InsertFields(oldEntry, fieldIRs)
+
+  def apply(row: RegionValue, globals: RegionValue, newLocus: RegionValue, newAlleles: RegionValue, aIndex: Int, wasSplit: Boolean): Long = {
+    
+  }
+}
+
 
 class SplitMultiPartitionContext(
   keepStar: Boolean,

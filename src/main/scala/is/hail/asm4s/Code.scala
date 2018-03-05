@@ -211,7 +211,7 @@ object Code {
 
   def _throw[T <: java.lang.Throwable, U](cerr: Code[T]): Code[U] = Code(cerr, new InsnNode(ATHROW))
 
-  def fatal(msg: Code[String]) = Code._throw(Code.newInstance[is.hail.utils.HailException, String, Option[String], Throwable](
+  def _fatal(msg: Code[String]) = Code._throw(Code.newInstance[is.hail.utils.HailException, String, Option[String], Throwable](
     msg,
     Code.invokeStatic[scala.Option[String], scala.Option[String]]("empty"),
     Code._null[Throwable]))

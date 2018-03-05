@@ -413,7 +413,7 @@ class CompileSuite {
     val t = TStruct("x"->TInt32())
     val region = Region()
     val rvb = new RegionValueBuilder(region)
-    val ir = CodeFunction(functions.UtilFunctions.triangle, Array(GetField(In(0, t), "x")))
+    val ir = ApplyFunction(functions.UtilFunctions.triangle, Array(GetField(In(0, t), "x")))
     val fb = FunctionBuilder.functionBuilder[Region, Long, Boolean, Int]
     doit(ir, fb)
     val f = fb.result()()

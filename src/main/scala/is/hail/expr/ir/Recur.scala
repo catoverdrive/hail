@@ -36,6 +36,6 @@ object Recur {
     case In(i, typ) => ir
     case InMissingness(i) => ir
     case Die(message) => ir
-    case CodeFunction(impl, args) => CodeFunction(impl, args.map(f))
+    case ApplyFunction(impl, args) => ApplyFunction(impl, args.map(f))
   }
 }

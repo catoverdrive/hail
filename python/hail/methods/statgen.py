@@ -1878,6 +1878,8 @@ class SplitMulti(object):
         annotate_entries = ','.join(['g.`{}` = {}'.format(k, v._ast.to_hql())
                                      for k, v in self._entry_fields.items()])
 
+        print(annotate_entries)
+
         jvds = scala_object(Env.hail().methods, 'SplitMulti').apply(
             self._ds._jvds,
             annotate_rows,

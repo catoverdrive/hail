@@ -448,11 +448,11 @@ private class Emit(
         present(fb.getArg[Boolean](i*2 + 3))
       case Die(m) =>
         present(Code._throw(Code.newInstance[RuntimeException, String](m)))
-      case CodeFunction(impl, args) =>
+      case ApplyFunction(impl, args) =>
         val (s, m, v) = args.map(emit(_)).unzip3
         val setup = coerce[Unit](Code(s :_*))
         val missing = m.reduce(_ || _)
-        val value = impl.implementation(v)
+        val value = impl.implementation(v.toArray)
         (setup, missing, value)
     }
   }

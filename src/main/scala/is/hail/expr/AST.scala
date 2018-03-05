@@ -2,6 +2,7 @@ package is.hail.expr
 
 import is.hail.expr.ir.IR
 import is.hail.asm4s.{Code, _}
+import is.hail.expr.ir.functions.IRFunctionRegistry
 import is.hail.expr.types._
 import is.hail.utils.EitherIsAMonad._
 import is.hail.utils._
@@ -729,10 +730,22 @@ case class Apply(posn: Position, fn: String, args: Array[AST]) extends AST(posn,
     } yield ir.ApplyBinaryPrimOp(op, x, y, t)
   }
 
+  private val functionLookup: Seq[IR] => Option[IR] = { x =>
+    IRFunctionRegistry.lookupFunction(fn, x.map(_.typ))
+      .map(f => ir.ApplyFunction(f, x))
+  }
+
+  private val tryIRConversion: IndexedSeq[IR] => Option[IR] = { irArgs =>
+    tryPrimOpConversion(irArgs) match {
+      case Some(x) => Some(x)
+      case None => functionLookup(irArgs)
+    }
+  }
+
 
   def toIR(agg: Option[String] = None): Option[IR] = for {
     irArgs <- anyFailAllFail(args.map(_.toIR(agg)))
-    ir <- tryPrimOpConversion(irArgs)
+    ir <- tryIRConversion(irArgs)
   } yield ir
 }
 

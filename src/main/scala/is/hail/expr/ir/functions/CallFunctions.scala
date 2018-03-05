@@ -37,7 +37,7 @@ object CallFunctions {
     const(0) | phased.toI | (ploidy & 3 << 1) | (ar << 3)
   }
 
-  val throwBadPloidy = Code.fatal(s"invalid ploidy. Only support ploidy == 2")
+  val throwBadPloidy = Code._fatal(s"invalid ploidy. Only support ploidy == 2")
 
   val ploidy: IRFunction[Int] = IRFunction[Int]("ploidy", TCall(), TInt32()) {
     case Array(c: Code[Call]) => (c >>> 1) & 0x3

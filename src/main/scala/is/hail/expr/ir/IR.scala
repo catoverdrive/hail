@@ -68,4 +68,4 @@ final case class InMissingness(i: Int) extends IR { val typ: Type = TBoolean() }
 // FIXME: should be type any
 final case class Die(message: String) extends IR { val typ = TVoid }
 
-final case class CodeFunction(implementation: IRFunction[_], args: Array[IR]) extends IR { val typ = implementation.returnType }
+final case class ApplyFunction(implementation: IRFunction[_], args: Seq[IR]) extends IR { val typ = implementation.returnType }

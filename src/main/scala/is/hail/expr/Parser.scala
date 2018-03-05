@@ -149,7 +149,7 @@ object Parser extends JavaTokenParsers {
     }, ts, f)
   }
 
-  def parseAnnotationExprsToAST(code: String, ec: EvalContext): (Array[(String, AST)]) =
+  def parseAnnotationExprsToAST(code: String, ec: EvalContext): Array[(String, AST)] =
     named_exprs(identifier).parse(code)
 
   def parseNamedExprs(code: String, ec: EvalContext): (Array[String], Array[Type], () => Array[Any]) = {
