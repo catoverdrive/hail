@@ -148,7 +148,7 @@ class ASTToIRSuite extends TestNGSuite {
   @Test
   def applyFunction() { for { (in, out) <- Array(
     "triangle(3)" ->
-      ir.ApplyFunction(ir.functions.UtilFunctions.triangle, Seq(I32(3)))
+      ir.ApplyFunction(new ir.functions.UtilFunctions().triangle, Seq(I32(3)))
   )
   } {
     assert(toIR(in).contains(out),

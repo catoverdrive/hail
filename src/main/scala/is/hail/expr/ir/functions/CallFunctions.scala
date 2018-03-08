@@ -2,21 +2,22 @@ package is.hail.expr.ir.functions
 
 import is.hail.asm4s._
 import is.hail.expr.types._
+import is.hail.variant.Call.alleleRepr
 import is.hail.variant._
 
 object CodeAllelePair {
   def apply(j: Code[Int], k: Code[Int]) = new CodeAllelePair(j | (k << 16))
 }
 
-class CodeAllelePair(p: Code[Int]) {
+class CodeAllelePair(val p: Code[Int]) {
   val j: Code[Int] = p & 0xffff
-  val k: Code[Int] = (p >> 16) & 0xffff
+  val k: Code[Int] = (p >>> 16) & 0xffff
   val nNonRefAlleles: Code[Int] =
     j.ceq(0).mux(0, 1) + k.ceq(0).mux(0, 1)
   val alleleIndices: (Code[Int], Code[Int]) = (j, k)
 }
 
-object CallFunctions {
+class CallFunctions {
   def diploidGTIndex(j: Code[Int], k: Code[Int]): Code[Int] =
     k * (k + 1) / 2 + j
 
@@ -34,7 +35,7 @@ object CallFunctions {
       phased, const(2))
 
   def call(ar: Code[Int], phased: Code[Boolean], ploidy: Code[Int]): Code[Call] = {
-    const(0) | phased.toI | (ploidy & 3 << 1) | (ar << 3)
+    const(0) | phased.toI | ((ploidy & 3) << 1) | (ar << 3)
   }
 
   val throwBadPloidy = Code._fatal(s"invalid ploidy. Only support ploidy == 2")
@@ -76,10 +77,13 @@ object CallFunctions {
         throwBadPloidy))
   }
 
+//  val p = Call.allelePair(c)
+//  Call2(if (p.j == i) 1 else 0, if (p.k == i) 1 else 0, Call.isPhased(c))
+
   val downcode: IRFunction[Call] = IRFunction[Call]("downcode", TCall(), TInt32(), TCall()) {
     case Array(call: Code[Call], i: Code[Int]) =>
       ploidy(call).ceq(2).mux(
-        call2(allelePair(call).j.ceq(1).toI, allelePair(call).k.ceq(1).toI, isPhased(call)),
+          call2(allelePair(call).j.ceq(i).mux(1, 0), allelePair(call).k.ceq(i).mux(1, 0), isPhased(call)),
         ploidy(call).ceq(1).mux(
           call1(alleleByIndex(call, 0).ceq(i).toI, isPhased(call)),
           ploidy(call).ceq(0).mux(
@@ -96,6 +100,18 @@ object CallFunctions {
       ploidy(c).ceq(2).mux(
         i.ceq(0).mux(allelePair(c).j, allelePair(c).k),
         throwBadPloidy
+      ))
+
+  val unphasedDiploidGTIndex: IRFunction[Int] = IRFunction[Int]("UnphasedDiploidGtIndexCall", TInt32(), TCall()) {
+    case Array(gt: Code[Int]) =>
+      (gt < 0).mux(
+        Code._fatal(Code.invokeStatic[java.lang.Integer, Int, String]("toString", gt)),
+        call(gt, false, 2)
       )
-    )
+  }
+
+  val equiv: IRFunction[Boolean] = IRFunction[Boolean]("==", TCall(), TCall(), TBoolean()) {
+    case Array(c1: Code[Call], c2: Code[Call]) =>
+      c1.ceq(c2)
+  }
 }

@@ -704,7 +704,7 @@ object OrderedRVD {
           prevPK.setSelect(typ.rowType, typ.pkRowFieldIdx, rv)
 
           pkUR.set(prevPK.value)
-          assert(partitioner.rangeBounds(i).asInstanceOf[Interval].contains(typ.pkType.ordering, pkUR))
+          assert(partitioner.rangeBounds(i).asInstanceOf[Interval].contains(typ.pkType.ordering, pkUR), s"${ partitioner.rangeBounds(i).asInstanceOf[Interval] } should contain $pkUR")
 
           assert(typ.pkRowOrd.compare(prevPK.value, rv) == 0)
 

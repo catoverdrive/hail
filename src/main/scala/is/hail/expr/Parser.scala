@@ -155,6 +155,22 @@ object Parser extends JavaTokenParsers {
     as
   }
 
+  def parseAnnotationExprsToAST(code: String, ec: EvalContext, expectedHead: Option[String]): Array[(String, AST)] = {
+    named_exprs(annotationIdentifier)
+      .parse(code).map { case (p, ast) =>
+      ast.typecheck(ec)
+      val n = expectedHead match {
+        case Some(h) =>
+          require(p.head == h && p.length == 2)
+          p.last
+        case None =>
+          require(p.length == 1)
+          p.head
+      }
+      (n, ast)
+    }
+  }
+
 
   def parseNamedExprs(code: String, ec: EvalContext): (Array[String], Array[Type], () => Array[Any]) = {
     val (names, types, f) = parseNamedExprs[String](code, identifier, ec)
