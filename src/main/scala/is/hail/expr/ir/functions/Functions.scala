@@ -5,7 +5,7 @@ import is.hail.expr.{AST, Lambda}
 import is.hail.expr.ir.{IR, _}
 import is.hail.expr.types._
 import is.hail.expr.types.coerce
-import is.hail.utils.flatLift
+import is.hail.utils._
 
 import scala.collection.mutable
 
@@ -19,10 +19,12 @@ object IRFunctionRegistry {
 
   def lookupFunction(name: String, args: Seq[Type]): Option[IRFunction[_]] = {
     registry.get(name).flatMap { funcs =>
+//      warn(s"$name found w/ args {${funcs.map{f => f.types.mkString(",")}.mkString("}; {")}}; expected: ${args.mkString(",")}")
       val method = funcs.filter { f => f.types.zip(args).forall { case (t1, t2) => t1.isOfType(t2) } }
       method match {
         case IndexedSeq() => None
         case IndexedSeq(x) => Some(x)
+        case IndexedSeq(x, y) => if (x.types.zip(args).forall {case (t1, t2) => t1 == t2 }) Some(x) else Some(y)
       }
     }
   }
@@ -48,7 +50,7 @@ object IRRegistry {
       } yield ApplyBinaryPrimOp(op, x, y, t)
     }
 
-  def lookup(name: String, args: IndexedSeq[IR]): Option[IR] = {
+  def lookup(name: String, args: IndexedSeq[IR], types: IndexedSeq[Type]): Option[IR] = {
     (name, args) match {
       case ("range", IndexedSeq(a, b, c)) => Some(ArrayRange(a, b, c))
       case ("isDefined", IndexedSeq(x)) => Some(ApplyUnaryPrimOp(Bang(), IsNA(x)))
@@ -68,13 +70,13 @@ object IRRegistry {
         val value = Ref("v")
         val body = If(IsNA(min), value, If(IsNA(value), min, If(ApplyBinaryPrimOp(LT(), min, value), min, value)))
         Some(ArrayFold(x, na, "min", "v", body))
-
-      case ("gqFromPL", IndexedSeq(x)) => //if x.typ.isOfType(TArray(TInt32())) =>
-        Some(GenotypeFunctions.gqFromPL(x))
+//
+//      case ("gqFromPL", IndexedSeq(x)) =>
+//        Some(GenotypeFunctions.gqFromPL(x))
 
       case (n, a) =>
         tryPrimOpConversion(name)(a).orElse(
-          IRFunctionRegistry.lookupFunction(n, a.map(_.typ))
+          IRFunctionRegistry.lookupFunction(n, types)
             .map { irf => ApplyFunction(irf, a) })
     }
   }
@@ -100,12 +102,13 @@ object IRRegistry {
 }
 
 object IRFunction {
-  def apply[T](name: String, t: Type*)(impl: Array[Code[_]] => Code[T]): IRFunction[T] = {
+  def apply[T](name: String, t: Type*)(impl: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T]): IRFunction[T] = {
     val f = new IRFunction[T] {
       def types: Array[Type] = t.toArray
 
-      def implementation: Array[Code[_]] => Code[T] = impl
+      def implementation: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T] = impl
     }
+
     IRFunctionRegistry.addFunction(name, f)
     f
   }
@@ -114,9 +117,9 @@ object IRFunction {
 abstract class IRFunction[T] {
   def types: Array[Type]
 
-  def implementation: Array[Code[_]] => Code[T]
+  def implementation: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T]
 
-  def apply(args: Code[_]*): Code[T] = implementation(args.toArray)
+  def apply(fb: FunctionBuilder[_ >: Null], args: Code[_]*): Code[T] = implementation(fb, args.toArray)
 
   def returnType: Type = types.last
 }

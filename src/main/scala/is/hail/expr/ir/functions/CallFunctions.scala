@@ -41,69 +41,82 @@ class CallFunctions {
   val throwBadPloidy = Code._fatal(s"invalid ploidy. Only support ploidy == 2")
 
   val ploidy: IRFunction[Int] = IRFunction[Int]("ploidy", TCall(), TInt32()) {
-    case Array(c: Code[Call]) => (c >>> 1) & 0x3
+    case (fb, Array(c: Code[Call])) => (c >>> 1) & 0x3
   }
 
   val isPhased: IRFunction[Boolean] = IRFunction[Boolean]("isPhased", TCall(), TBoolean()) {
-    case Array(call: Code[Call]) => (call & 0x1).ceq(1)
+    case (fb, Array(call: Code[Call])) => (call & 0x1).ceq(1)
   }
 
   val isHaploid: IRFunction[Boolean] = IRFunction[Boolean]("isHaploid", TCall(), TBoolean()) {
-    case Array(call: Code[Call]) => ploidy(call).ceq(1)
+    case (fb, Array(call: Code[Call])) => ploidy(fb, call).ceq(1)
   }
 
   val isDiploid: IRFunction[Boolean] = IRFunction[Boolean]("isDiploid", TCall(), TBoolean()) {
-    case Array(call: Code[Call]) => ploidy(call).ceq(2)
+    case (fb, Array(call: Code[Call])) => ploidy(fb, call).ceq(2)
   }
 
   val isUnphasedDiploid: IRFunction[Boolean] = IRFunction[Boolean]("isUnphasedDiploid", TCall(), TBoolean()) {
-    case Array(call: Code[Call]) => (call & 0x7).ceq(4)
+    case (_, Array(call: Code[Call])) => (call & 0x7).ceq(4)
   }
 
   val isPhasedDiploid: IRFunction[Boolean] = IRFunction[Boolean]("isPhasedDiploid", TCall(), TBoolean()) {
-    case Array(call: Code[Call]) => (call & 0x7).ceq(5)
+    case (_, Array(call: Code[Call])) => (call & 0x7).ceq(5)
   }
 
   val alleleRepr: IRFunction[Int] = IRFunction[Int]("alleleRepr", TCall(), TInt32()) {
-    case Array(call: Code[Call]) => call >>> 3
+    case (_, Array(call: Code[Call])) => call >>> 3
   }
 
-  def allelePair(call: Code[Call]): CodeAllelePair = {
+  def allelePair(fb: FunctionBuilder[_], call: Code[Call]): CodeAllelePair = {
     new CodeAllelePair(
-      isDiploid(call).mux(
-        isPhased(call).mux(
-          Code.invokeStatic[AllelePairFunctions, Int, Int]("allelePairFromPhased", alleleRepr(call)),
-          Code.invokeStatic[AllelePairFunctions, Int, Int]("allelePair", alleleRepr(call))),
+      isDiploid(fb, call).mux(
+        isPhased(fb, call).mux(
+          Code.invokeStatic[AllelePairFunctions, Int, Int]("allelePairFromPhased", alleleRepr(fb, call)),
+          Code.invokeStatic[AllelePairFunctions, Int, Int]("allelePair", alleleRepr(fb, call))),
         throwBadPloidy))
   }
 
-//  val p = Call.allelePair(c)
-//  Call2(if (p.j == i) 1 else 0, if (p.k == i) 1 else 0, Call.isPhased(c))
-
   val downcode: IRFunction[Call] = IRFunction[Call]("downcode", TCall(), TInt32(), TCall()) {
-    case Array(call: Code[Call], i: Code[Int]) =>
-      ploidy(call).ceq(2).mux(
-          call2(allelePair(call).j.ceq(i).mux(1, 0), allelePair(call).k.ceq(i).mux(1, 0), isPhased(call)),
-        ploidy(call).ceq(1).mux(
-          call1(alleleByIndex(call, 0).ceq(i).toI, isPhased(call)),
-          ploidy(call).ceq(0).mux(
-            call,
-            throwBadPloidy
+    case (fb, Array(call: Code[Call], i: Code[Int])) =>
+      val ap = fb.newLocal[Int]("downcode")
+      val k = fb.newLocal[Int]("downcode")
+      val j = fb.newLocal[Int]("downcode")
+      val ip = fb.newLocal[Boolean]("downcode")
+      val ploidyvar = fb.newLocal[Int]("downcode_pl")
+      Code(
+        ploidyvar := ploidy(fb, call),
+        ploidyvar.ceq(2).mux(
+          Code(
+            ap := allelePair(fb, call).p,
+            j := new CodeAllelePair(ap).j.ceq(i).mux(1, 0),
+            k := new CodeAllelePair(ap).k.ceq(i).mux(1, 0),
+            ip := isPhased(fb, call),
+            call2(j, k, ip)
+          )
+          ,
+          ploidyvar.ceq(1).mux(
+            call1(alleleByIndex(fb, call, 0).ceq(i).toI, isPhased(fb, call)),
+            ploidyvar.ceq(0).mux(
+              call,
+              throwBadPloidy
+            )
           )
         )
       )
+
   }
 
-  def alleleByIndex(c: Code[Call], i: Code[Int]): Code[Int] =
-    ploidy(c).ceq(1).mux(
-      alleleRepr(c),
-      ploidy(c).ceq(2).mux(
-        i.ceq(0).mux(allelePair(c).j, allelePair(c).k),
+  def alleleByIndex(fb: FunctionBuilder[_], c: Code[Call], i: Code[Int]): Code[Int] =
+    ploidy(fb, c).ceq(1).mux(
+      alleleRepr(fb, c),
+      ploidy(fb, c).ceq(2).mux(
+        i.ceq(0).mux(allelePair(fb, c).j, allelePair(fb, c).k),
         throwBadPloidy
       ))
 
   val unphasedDiploidGTIndex: IRFunction[Int] = IRFunction[Int]("UnphasedDiploidGtIndexCall", TInt32(), TCall()) {
-    case Array(gt: Code[Int]) =>
+    case (fb, Array(gt: Code[Int])) =>
       (gt < 0).mux(
         Code._fatal(Code.invokeStatic[java.lang.Integer, Int, String]("toString", gt)),
         call(gt, false, 2)
@@ -111,7 +124,7 @@ class CallFunctions {
   }
 
   val equiv: IRFunction[Boolean] = IRFunction[Boolean]("==", TCall(), TCall(), TBoolean()) {
-    case Array(c1: Code[Call], c2: Code[Call]) =>
+    case (fb, Array(c1: Code[Call], c2: Code[Call])) =>
       c1.ceq(c2)
   }
 }

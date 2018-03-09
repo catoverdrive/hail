@@ -99,11 +99,10 @@ object Compile {
     val env = args.zipWithIndex.foldLeft(new Env[IR]()) {
       case (newEnv, ((name, rvr), i)) => newEnv.bind(name, In(i, rvr.typ))
     }
-    e = Subst(e, env)
+    e = Optimize(Subst(e, env))
     Infer(e)
     assert(TypeToIRIntermediateTypeInfo(e.typ) == typeInfo[R])
     Emit(e, fb)
     (e.typ, fb.result())
   }
-
 }

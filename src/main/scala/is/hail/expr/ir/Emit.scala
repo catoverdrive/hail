@@ -518,9 +518,13 @@ private class Emit(
         present(Code._throw(Code.newInstance[RuntimeException, String](m)))
       case ApplyFunction(impl, args) =>
         val (s, m, v) = args.map(emit(_)).unzip3
-        val setup = coerce[Unit](Code(s :_*))
+        val mbs = m.map { _ => mb.newBit() }
+        val vars = args.map { a => fb.newLocal()(TypeToIRIntermediateTypeInfo(a.typ)) }
+        val ins = vars.zip(v).map { case (l, i) => Code(i, l.storeInsn) }
+        val mins = mbs.zip(m).map { case (l, i) => l := i }
+        val setup = coerce[Unit](Code(s ++ mins ++ ins :_*))
         val missing = m.reduce(_ || _)
-        val value = impl.implementation(v.toArray)
+        val value = impl.implementation(fb, vars.map { a => a.load() }.toArray)
         (setup, missing, value)
     }
   }

@@ -7,6 +7,6 @@ import is.hail.expr.types._
 class UtilFunctions {
 
   val triangle: IRFunction[Int] = IRFunction[Int]("triangle", TInt32(), TInt32()) {
-    case Array(n: Code[Int]) => (n * (n + 1)) / 2
+    case (_, Array(n: Code[Int])) => (n * (n + 1)) / 2
   }
 }

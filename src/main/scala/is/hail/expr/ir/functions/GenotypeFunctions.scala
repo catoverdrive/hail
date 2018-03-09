@@ -1,8 +1,10 @@
 package is.hail.expr.ir.functions
 
+import is.hail.annotations.{Region, StagedRegionValueBuilder}
 import is.hail.asm4s._
 import is.hail.expr.types._
 import is.hail.expr.ir._
+import is.hail.utils._
 
 object GenotypeFunctions {
 
@@ -21,4 +23,31 @@ object GenotypeFunctions {
 
 class GenotypeFunctions {
 
+  def getGQFromPL(t: TArray): (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[Int] = {
+    case (fb, Array(pl: Code[Long])) =>
+      val m = fb.newLocal[Int]
+      val m2 = fb.newLocal[Int]
+      val i = fb.newLocal[Int]
+      val pli = fb.newLocal[Int]
+      Code(
+        m := 99,
+        m2 := 99,
+        i := 0,
+        Code.whileLoop(i < t.loadLength(fb.getArg[Region](1), pl),
+          pli := fb.getArg[Region](1).load().loadInt(t.loadElement(fb.getArg[Region](1), pl, i)),
+          (pli < m).mux(
+            Code(m2 := m, m := pli),
+            (pli < m2).mux(
+              m2 := pli,
+              Code._empty
+            )
+          ),
+          i := i + 1
+        ),
+        m2 - m
+      )
+  }
+
+  val gqFromPL: IRFunction[Int] = IRFunction[Int]("gqFromPL", TArray(TInt32()), TInt32())(getGQFromPL(TArray(TInt32())))
+  val gqFromPL2: IRFunction[Int] = IRFunction[Int]("gqFromPL", TArray(+TInt32()), TInt32())(getGQFromPL(TArray(+TInt32())))
 }

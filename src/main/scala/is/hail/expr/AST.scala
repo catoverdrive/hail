@@ -723,11 +723,15 @@ case class Apply(posn: Position, fn: String, args: Array[AST]) extends AST(posn,
       FunctionRegistry.call(fn, args, args.map(_.`type`).toSeq)
   }
 
-  def toIR(agg: Option[String] = None): Option[IR] =
+  override def toString: String = s"Apply($fn, [${args.map{a => s"$a: ${a.`type`}"}.mkString(",")}])"
+
+  def toIR(agg: Option[String] = None): Option[IR] = {
+//    info(s"looking up $this")
     for {
       irArgs <- anyFailAllFail(args.map(_.toIR(agg)))
-      ir <- IRRegistry.lookup(fn, irArgs)
+      ir <- IRRegistry.lookup(fn, irArgs, args.map(_.`type`))
     } yield ir
+  }
 }
 
 case class ApplyMethod(posn: Position, lhs: AST, method: String, args: Array[AST]) extends AST(posn, lhs +: args) {
@@ -849,7 +853,7 @@ case class ApplyMethod(posn: Position, lhs: AST, method: String, args: Array[AST
       case _ =>
         for {
           irs <- anyFailAllFail((lhs +: args).map(_.toIR(agg)))
-          ir <- IRRegistry.lookup(method, irs)
+          ir <- IRRegistry.lookup(method, irs, (lhs +: args).map(_.`type`))
         } yield ir
     }
   }
