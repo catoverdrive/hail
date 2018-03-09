@@ -155,7 +155,7 @@ class Method5Builder[A, B, C, D, E, R](fb: FunctionBuilder[_], mname: String)
   def apply(a:Code[A], b: Code[B], c: Code[C], d: Code[D], e: Code[E]): Code[R] = invoke(a, b, c, d, e).asInstanceOf[Code[R]]
 }
 
-class FunctionBuilder[+F >: Null](parameterTypeInfo: Array[MaybeGenericTypeInfo[_]], returnTypeInfo: MaybeGenericTypeInfo[_],
+class FunctionBuilder[F >: Null](parameterTypeInfo: Array[MaybeGenericTypeInfo[_]], returnTypeInfo: MaybeGenericTypeInfo[_],
   packageName: String = "is/hail/codegen/generated")(implicit interfaceTi: TypeInfo[F]) {
 
   import FunctionBuilder._
@@ -222,6 +222,8 @@ class FunctionBuilder[+F >: Null](parameterTypeInfo: Array[MaybeGenericTypeInfo[
 
   def newMethod[A: TypeInfo, R: TypeInfo] = {
     val mb = new Method1Builder[A, R](this, s"method${ methods.size }")
+    methods.append(mb)
+    mb
   }
 
   def newMethod[A: TypeInfo, B: TypeInfo, R: TypeInfo] = {
@@ -292,7 +294,7 @@ class FunctionBuilder[+F >: Null](parameterTypeInfo: Array[MaybeGenericTypeInfo[
       val tcv = new TraceClassVisitor(null, new Textifier, pw)
       cr.accept(tcv, 0)
     }
-
+    info(s"$name; len: ${ bytes.length }")
     bytes
   }
 

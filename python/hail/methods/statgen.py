@@ -2049,10 +2049,11 @@ def split_multi_hts(ds, keep_star=False, left_aligned=False):
                          [hl.sum(ds.AD) - ds.AD[sm.a_index()], ds.AD[sm.a_index()]]),
         DP=ds.DP,
         PL=pl,
-        GQ=hl.gq_from_pl(ds.PL)
+        GQ=hl.gq_from_pl(pl)
     )
-
     return sm.result()
+    #split = sm.result()
+    #return split.annotate_entries(GQ=hl.gq_from_pl(split.PL))
 
 
 @typecheck(dataset=MatrixTable)

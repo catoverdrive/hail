@@ -1,5 +1,7 @@
 package is.hail.expr.ir
 
+import java.io.FileOutputStream
+
 import is.hail.annotations._
 import is.hail.asm4s._
 import is.hail.expr.types._
@@ -12,6 +14,9 @@ case class RegionValueRep[RVT: ClassTag](typ: Type) {
 }
 
 object Compile {
+
+  var i: Int = 0
+
   def apply[T0: TypeInfo, T1: TypeInfo, R: TypeInfo](
     name0: String,
     rep0: RegionValueRep[T0],
@@ -103,6 +108,7 @@ object Compile {
     Infer(e)
     assert(TypeToIRIntermediateTypeInfo(e.typ) == typeInfo[R])
     Emit(e, fb)
-    (e.typ, fb.result())
+    i += 1
+    (e.typ, fb.result(Some(new java.io.PrintWriter(new FileOutputStream(s"/Users/wang/data/compileout-$i.txt")))))
   }
 }

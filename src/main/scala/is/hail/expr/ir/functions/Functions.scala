@@ -102,24 +102,28 @@ object IRRegistry {
 }
 
 object IRFunction {
-  def apply[T](name: String, t: Type*)(impl: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T]): IRFunction[T] = {
+  def apply[T](mname: String, t: Type*)(impl: (MethodBuilder, Array[Code[_]]) => Code[T]): IRFunction[T] = {
     val f = new IRFunction[T] {
-      def types: Array[Type] = t.toArray
+      override val name: String = mname
 
-      def implementation: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T] = impl
+      override val types: Array[Type] = t.toArray
+
+      override val implementation: (MethodBuilder, Array[Code[_]]) => Code[T] = impl
     }
 
-    IRFunctionRegistry.addFunction(name, f)
+    IRFunctionRegistry.addFunction(mname, f)
     f
   }
 }
 
 abstract class IRFunction[T] {
+  def name: String
+
   def types: Array[Type]
 
-  def implementation: (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[T]
+  def implementation: (MethodBuilder, Array[Code[_]]) => Code[T]
 
-  def apply(fb: FunctionBuilder[_ >: Null], args: Code[_]*): Code[T] = implementation(fb, args.toArray)
+  def apply(mb: MethodBuilder, args: Code[_]*): Code[T] = implementation(mb, args.toArray)
 
   def returnType: Type = types.last
 }

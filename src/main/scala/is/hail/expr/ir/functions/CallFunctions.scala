@@ -68,7 +68,7 @@ class CallFunctions {
     case (_, Array(call: Code[Call])) => call >>> 3
   }
 
-  def allelePair(fb: FunctionBuilder[_], call: Code[Call]): CodeAllelePair = {
+  def allelePair(fb: MethodBuilder, call: Code[Call]): CodeAllelePair = {
     new CodeAllelePair(
       isDiploid(fb, call).mux(
         isPhased(fb, call).mux(
@@ -107,7 +107,7 @@ class CallFunctions {
 
   }
 
-  def alleleByIndex(fb: FunctionBuilder[_], c: Code[Call], i: Code[Int]): Code[Int] =
+  def alleleByIndex(fb: MethodBuilder, c: Code[Call], i: Code[Int]): Code[Int] =
     ploidy(fb, c).ceq(1).mux(
       alleleRepr(fb, c),
       ploidy(fb, c).ceq(2).mux(

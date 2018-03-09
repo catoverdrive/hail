@@ -261,6 +261,7 @@ object SplitMulti {
 }
 
 class SplitMulti(vsm: MatrixTable, variantExpr: String, genotypeExpr: String, keepStar: Boolean, leftAligned: Boolean) {
+  warn(s"splitting")
   val vEC = EvalContext(Map(
     "global" -> (0, vsm.globalType),
     "newLocus" -> (1, vsm.rowKeyStruct.types(0)),
@@ -282,6 +283,7 @@ class SplitMulti(vsm: MatrixTable, variantExpr: String, genotypeExpr: String, ke
 
   val vASTs = Parser.parseAnnotationExprsToAST(variantExpr, vEC, Some("va"))
   val gASTs = Parser.parseAnnotationExprsToAST(genotypeExpr, gEC, Some("g"))
+  warn(s"getting IRs")
 
   val vIRs = vASTs.flatMap { case (name, ast) => for (ir <- ast.toIR()) yield {
     (name, ir)
@@ -299,9 +301,11 @@ class SplitMulti(vsm: MatrixTable, variantExpr: String, genotypeExpr: String, ke
     if (vASTs.length == vIRs.length && gASTs.length == gIRs.length) {
 //    if (false) {
       val ir = new SplitMultiRowIR(vIRs, gIRs, vsm.matrixType)
+      warn("Using IR for SplitMulti")
       (ir.newMatrixType, false, ir.splitRow)
     } else {
       val t = vsm.matrixType.copyParts(rowType = vAnnotator.newT, entryType = gAnnotator.newT)
+      warn("Falling back to AST for SplitMulti")
       (t, true, null)
     }
 
@@ -320,7 +324,6 @@ class SplitMulti(vsm: MatrixTable, variantExpr: String, genotypeExpr: String, ke
     val locusIndex = localRowType.fieldIdx("locus")
 
     if (useAST) {
-      warn("Falling back to AST for SplitMulti")
       vsm.rvd.mapPartitions { it =>
         val context = new SplitMultiPartitionContextAST(localKeepStar, localNSamples, localGlobalAnnotation,
           localMatrixType, localVAnnotator, localGAnnotator, newRowType)
@@ -331,7 +334,6 @@ class SplitMulti(vsm: MatrixTable, variantExpr: String, genotypeExpr: String, ke
         }
       }
     } else {
-      warn("Using IR for SplitMulti")
       vsm.rvd.mapPartitions { it =>
         val context = new SplitMultiPartitionContextIR(localKeepStar, localNSamples, localGlobalAnnotation,
           localMatrixType, localSplitRow, newRowType)

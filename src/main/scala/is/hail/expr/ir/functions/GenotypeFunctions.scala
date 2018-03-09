@@ -23,17 +23,19 @@ object GenotypeFunctions {
 
 class GenotypeFunctions {
 
-  def getGQFromPL(t: TArray): (FunctionBuilder[_ >: Null], Array[Code[_]]) => Code[Int] = {
+  def getGQFromPL(t: TArray): (MethodBuilder, Array[Code[_]]) => Code[Int] = {
     case (fb, Array(pl: Code[Long])) =>
       val m = fb.newLocal[Int]
       val m2 = fb.newLocal[Int]
       val i = fb.newLocal[Int]
       val pli = fb.newLocal[Int]
+      val len = fb.newLocal[Int]
       Code(
         m := 99,
         m2 := 99,
         i := 0,
-        Code.whileLoop(i < t.loadLength(fb.getArg[Region](1), pl),
+        len := t.loadLength(fb.getArg[Region](1), pl),
+        Code.whileLoop(i < len,
           pli := fb.getArg[Region](1).load().loadInt(t.loadElement(fb.getArg[Region](1), pl, i)),
           (pli < m).mux(
             Code(m2 := m, m := pli),

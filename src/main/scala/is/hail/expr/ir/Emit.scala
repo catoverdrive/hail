@@ -3,10 +3,12 @@ package is.hail.expr.ir
 import is.hail.asm4s._
 import is.hail.annotations._
 import is.hail.annotations.aggregators._
+import is.hail.expr.ir.functions.IRFunction
 import is.hail.expr.types._
 import is.hail.utils._
 import org.objectweb.asm.tree._
 
+import scala.collection.mutable
 import scala.language.existentials
 import scala.language.postfixOps
 
@@ -54,6 +56,10 @@ private class Emit(
   mb: StagedBitSet,
   tAggInOpt: Option[TAggregable],
   nSpecialArguments: Int) {
+
+  val methods: mutable.Map[IRFunction[_], MethodBuilder] = mutable.Map()
+
+  val irmethods: mutable.Map[String, MethodBuilder] = mutable.Map()
 
   import Emit.E
 
@@ -253,25 +259,36 @@ private class Emit(
         val (doa, ma, va) = emit(a)
         (doa, ma, TContainer.loadLength(region, coerce[Long](va)))
       case x@ArrayRange(startir, stopir, stepir) =>
+        val rangem = irmethods.getOrElseUpdate("ArrayRange", {
+          val methodbuilder = fb.newMethod[Region, Int, Int, Int, Long]
+          val srvb = new StagedRegionValueBuilder(methodbuilder, x.typ)
+          val start = methodbuilder.getArg[Int](2)
+          val stop = methodbuilder.getArg[Int](3)
+          val step = methodbuilder.getArg[Int](4)
+          val len = methodbuilder.newLocal[Int]("ar_len")
+          val c = Code(
+            len := ((stop - start - 1) / step) + 1,
+            srvb.start(len, init=true),
+            Code.whileLoop(start < stop,
+              srvb.addInt(start),
+              srvb.advance(),
+              start := start + step
+            ),
+            srvb.offset
+          )
+          methodbuilder.emit(c)
+          methodbuilder
+        })
         val (d, m, v) = Array(emit(startir), emit(stopir), emit(stepir)).unzip3
-        val srvb = new StagedRegionValueBuilder(fb, x.typ)
         val start = fb.newLocal[Int]("ar_start")
         val stop = fb.newLocal[Int]("ar_stop")
         val step = fb.newLocal[Int]("ar_step")
-        val len = fb.newLocal[Int]("ar_len")
+
         (coerce[Unit](Code(d: _*)), m.reduce(_ || _), Code(
           start := coerce[Int](v(0)),
           stop := coerce[Int](v(1)),
           step := coerce[Int](v(2)),
-          len := ((stop - start - 1) / step) + 1,
-          srvb.start(len, init=true),
-          Code.whileLoop(start < stop,
-            srvb.addInt(start),
-            srvb.advance(),
-            start := start + step
-          ),
-          srvb.offset
-        ))
+          rangem.invoke(fb.getArg[Region](1), start, stop, step)))
       case x@ArrayMap(a, name, body, elementTyp) =>
         val tin = coerce[TArray](a.typ)
         val tout = x.typ
@@ -517,14 +534,18 @@ private class Emit(
       case Die(m) =>
         present(Code._throw(Code.newInstance[RuntimeException, String](m)))
       case ApplyFunction(impl, args) =>
+        val meth = methods.getOrElseUpdate(impl, {
+          val args = impl.types.init.map { t => TypeToIRIntermediateTypeInfo(t) }
+          val methodbuilder = fb.newMethod(typeInfo[Region] +: args, TypeToIRIntermediateTypeInfo(impl.types.last))
+          methodbuilder.emit(impl.implementation(methodbuilder, args.zipWithIndex.map { case (a, i) => methodbuilder.getArg(i + 2)(a).load() } ))
+          methodbuilder
+        })
         val (s, m, v) = args.map(emit(_)).unzip3
-        val mbs = m.map { _ => mb.newBit() }
-        val vars = args.map { a => fb.newLocal()(TypeToIRIntermediateTypeInfo(a.typ)) }
-        val ins = vars.zip(v).map { case (l, i) => Code(i, l.storeInsn) }
-        val mins = mbs.zip(m).map { case (l, i) => l := i }
-        val setup = coerce[Unit](Code(s ++ mins ++ ins :_*))
+        val vars = args.map { a => coerce[Any](fb.newLocal()(TypeToIRIntermediateTypeInfo(a.typ))) }
+        val ins = vars.zip(v).map { case (l, i) => l := i }
+        val setup = coerce[Unit](Code(s:_*))
         val missing = m.reduce(_ || _)
-        val value = impl.implementation(fb, vars.map { a => a.load() }.toArray)
+        val value = Code(ins :+ meth.invoke(fb.getArg[Region](1).load() +: vars.map { a => a.load() }: _*): _*)
         (setup, missing, value)
     }
   }
