@@ -67,6 +67,7 @@ object IRFunctionRegistry {
   GenotypeFunctions.registerAll()
   MathFunctions.registerAll()
   ArrayFunctions.registerAll()
+  DictFunctions.registerAll()
   UtilFunctions.registerAll()
   StringFunctions.registerAll()
 }

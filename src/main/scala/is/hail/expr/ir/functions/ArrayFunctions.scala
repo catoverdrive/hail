@@ -126,5 +126,7 @@ object ArrayFunctions extends RegistryFunctions {
         idx,
         ArrayRef(a, Ref(idx, TInt32())))
     }
+
+    registerIR("toArray", tv("T", _.isInstanceOf[TContainer]))(ToArray)
   }
 }
