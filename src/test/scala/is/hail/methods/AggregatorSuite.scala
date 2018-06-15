@@ -284,16 +284,6 @@ class AggregatorSuite extends SparkSuite {
       case (x, y) => x == y
     }
 
-  @Test def testExistsForAll() {
-    val gs = Array(7, 6, 3, na, 1, 2, na, 4, 5, -1)
-
-    assert(runAggregatorExpression("AGG.exists(x => x < 0)", "AGG", TInt32(), gs) == true)
-    assert(runAggregatorExpression("AGG.exists(x => x < -2)", "AGG", TInt32(), gs) == false)
-
-    assert(runAggregatorExpression("AGG.forall(x => isMissing(x) || x.abs() < 10)", "AGG", TInt32(), gs) == true)
-    assert(runAggregatorExpression("AGG.forall(x => x > -2)", "AGG", TInt32(), gs) == false) // because missing
-  }
-
   @Test def takeByNAIsAlwaysLast() {
     val inf = Double.PositiveInfinity
     val nan = Double.NaN

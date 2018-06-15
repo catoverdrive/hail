@@ -1330,12 +1330,6 @@ object FunctionRegistry {
   registerLambdaAggregator[Any, (Any) => Any, java.lang.Double]("fraction", (f: (Any) => Any) => new FractionAggregator(f)
   )(aggregableHr(TTHr), unaryHr(TTHr, boxedboolHr), boxedFloat64Hr)
 
-  registerLambdaAggregator[Any, (Any) => Any, Boolean]("exists", (f: (Any) => Any) => new ExistsAggregator(f)
-  )(aggregableHr(TTHr), unaryHr(TTHr, boxedboolHr), boolHr)
-
-  registerLambdaAggregator[Any, (Any) => Any, Boolean]("forall", (f: (Any) => Any) => new ForallAggregator(f)
-  )(aggregableHr(TTHr), unaryHr(TTHr, boxedboolHr), boolHr)
-
   registerDependentAggregator("take", () => {
     val t = TT.t
     (n: Int) => new TakeAggregator(t, n)
