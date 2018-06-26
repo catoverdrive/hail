@@ -18,7 +18,7 @@ import scala.collection.mutable
 import scala.language.implicitConversions
 import is.hail.expr.Parser._
 import is.hail.expr.ir.EmitFunctionBuilder
-import is.hail.expr.ir.functions.{IRFunctionRegistry, LiftoverFunctions, ReferenceGenomeFunctions}
+import is.hail.expr.ir.functions.{IRFunctionRegistry, LiftoverFunctions, LocusFunctions, ReferenceGenomeFunctions}
 import is.hail.io.reference.LiftOver
 import is.hail.variant.CopyState.CopyState
 import is.hail.variant.Sex.Sex
@@ -514,9 +514,12 @@ case class ReferenceGenome(name: String, contigs: Array[String], lengths: Map[St
   private[this] var registeredFunctions: Set[String] = Set.empty[String]
   def wrapFunctionName(fname: String): String = s"$fname($name)"
   def addIRFunctions(): Unit = {
-    val irFunctions = new ReferenceGenomeFunctions(this)
-    irFunctions.registerAll()
-    registeredFunctions ++= irFunctions.registered
+    val rgFunctions = new ReferenceGenomeFunctions(this)
+    val locusFunctions = new LocusFunctions(this)
+    rgFunctions.registerAll()
+    locusFunctions.registerAll()
+    registeredFunctions ++= rgFunctions.registered
+    registeredFunctions ++= locusFunctions.registered
   }
   def removeIRFunctions(): Unit = {
     registeredFunctions.foreach(IRFunctionRegistry.removeIRFunction)

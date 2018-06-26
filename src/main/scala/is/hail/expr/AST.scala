@@ -722,9 +722,14 @@ case class ApplyAST(posn: Position, fn: String, args: Array[AST]) extends AST(po
         this,
         tryPrimOpConversion(irArgs),
         tryComparisonConversion(irArgs),
-        IRFunctionRegistry
-          .lookupConversion(fn, irArgs.map(_.typ))
-          .map { irf => irf(irArgs) })
+        {
+          val newName = irArgs.flatMap { ir => ReferenceGenome.getReferences(ir.typ) }.distinct match {
+            case Seq(rg) => rg.wrapFunctionName(fn)
+            case Seq() => fn
+          }
+          IRFunctionRegistry.lookupConversion(newName, irArgs.map(_.typ))
+            .map { irf => irf(irArgs) }
+        })
     } yield ir
 
   def toIR(agg: Option[(String, String)] = None): ToIRErr[IR] = {
@@ -1066,10 +1071,14 @@ case class ApplyMethodAST(posn: Position, lhs: AST, method: String, args: Array[
         for {
           irs <- all((lhs +: args).map(_.toIR(agg)))
           argTypes = irs.map(_.typ)
+          newName = argTypes.flatMap(ReferenceGenome.getReferences).distinct match {
+            case Seq(rg) => rg.wrapFunctionName(method)
+            case Seq() => method
+          }
           ir <- fromOption(
             this,
             s"no method $method on type ${lhs.`type`} with arguments ${argTypes.tail}",
-            IRFunctionRegistry.lookupConversion(method, argTypes)
+            IRFunctionRegistry.lookupConversion(newName, argTypes)
               .map { irf => irf(irs) })
         } yield ir
     }

@@ -8,19 +8,43 @@ import is.hail.asm4s
 import is.hail.expr.ir.EmitMethodBuilder
 import is.hail.variant._
 import is.hail.expr.ir._
-import is.hail.utils.FastSeq
+import is.hail.utils._
 
 object LocusFunctions extends RegistryFunctions {
 
-  def getLocus(mb: EmitMethodBuilder, locus: Code[Long], typeString: String): Code[Locus] = {
-    val tlocus = types.coerce[TLocus](tv(typeString).t)
+  val trep = TLocus.representation()
+
+  def registerAll() {
+    registerCode("contig", tv("T", _.isInstanceOf[TLocus]), TString()) {
+      case (mb, locus: Code[Long]) =>
+        trep.loadField(getRegion(mb), locus, 0)
+    }
+
+    registerCode("position", tv("T", _.isInstanceOf[TLocus]), TInt32()) {
+      case (mb, locus: Code[Long]) =>
+        getRegion(mb).loadInt(trep.fieldOffset(locus, 1))
+    }
+  }
+}
+
+class LocusFunctions(rg: ReferenceGenome) extends RegistryFunctions {
+
+  val tlocus = TLocus(rg)
+  var registered: Set[String] = Set[String]()
+
+  def getLocus(mb: EmitMethodBuilder, locus: Code[Long]): Code[Locus] = {
     Code.checkcast[Locus](wrapArg(mb, tlocus)(locus).asInstanceOf[Code[AnyRef]])
   }
 
+  def registerName(mname: String): String = {
+    registered += rg.wrapFunctionName(mname)
+    rg.wrapFunctionName(mname)
+  }
+
   def registerLocusCode(methodName: String): Unit = {
-    registerCode(methodName, tv("T", _.isInstanceOf[TLocus]), TBoolean()) {
+    registerCode(registerName(methodName), tlocus, TBoolean()) {
       case (mb: EmitMethodBuilder, locus: Code[Long]) =>
-        val locusObject = getLocus(mb, locus, "T")
+        val locusObject = getLocus(mb, locus)
         val tlocus = types.coerce[TLocus](tv("T").t)
         val rg = tlocus.rg.asInstanceOf[ReferenceGenome]
 
@@ -30,20 +54,6 @@ object LocusFunctions extends RegistryFunctions {
   }
 
   def registerAll() {
-    registerCode("contig", tv("T", _.isInstanceOf[TLocus]), TString()) {
-      case (mb, locus: Code[Long]) =>
-        val region = getRegion(mb)
-        val tlocus = types.coerce[TLocus](tv("T").t)
-        tlocus.contig(region, locus)
-    }
-
-    registerCode("position", tv("T", _.isInstanceOf[TLocus]), TInt32()) {
-      case (mb, locus: Code[Long]) =>
-        val region = getRegion(mb)
-        val tlocus = types.coerce[TLocus](tv("T").t)
-        tlocus.position(region, locus)
-    }
-
     registerLocusCode("isAutosomalOrPseudoAutosomal")
     registerLocusCode("isAutosomal")
     registerLocusCode("inYNonPar")
@@ -52,20 +62,21 @@ object LocusFunctions extends RegistryFunctions {
     registerLocusCode("inXNonPar")
     registerLocusCode("inYPar")
 
-    registerCode("min_rep", tv("T", _.isInstanceOf[TLocus]), TArray(TString()), TTuple(tv("T"), TArray(TString()))) { (mb, lOff, aOff) =>
+    val locusAllelesType = TTuple(tlocus, TArray(TString()))
+    registerCode(registerName("min_rep"), tlocus, TArray(TString()), locusAllelesType) { (mb, lOff, aOff) =>
       val returnTuple = mb.newLocal[(Locus, IndexedSeq[String])]
-      val locus = getLocus(mb, lOff, "T")
+      val locus = getLocus(mb, lOff)
       val alleles = Code.checkcast[IndexedSeq[String]](wrapArg(mb, TArray(TString()))(aOff).asInstanceOf[Code[AnyRef]])
       val tuple = Code.invokeScalaObject[Locus, IndexedSeq[String], (Locus, IndexedSeq[String])](VariantMethods.getClass, "minRep", locus, alleles)
 
       val newLocus = Code.checkcast[Locus](returnTuple.load().get[java.lang.Object]("_1"))
       val newAlleles = Code.checkcast[IndexedSeq[String]](returnTuple.load().get[java.lang.Object]("_2"))
 
-      val srvb = new StagedRegionValueBuilder(mb, TTuple(tv("T").t, TArray(TString())))
+      val srvb = new StagedRegionValueBuilder(mb, locusAllelesType)
       Code(
         returnTuple := tuple,
         srvb.start(),
-        srvb.addBaseStruct(types.coerce[TBaseStruct](tv("T").t.fundamentalType), { locusBuilder =>
+        srvb.addBaseStruct(types.coerce[TBaseStruct](tlocus.fundamentalType), { locusBuilder =>
           Code(
             locusBuilder.start(),
             locusBuilder.addString(newLocus.invoke[String]("contig")),

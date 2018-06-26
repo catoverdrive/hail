@@ -1,13 +1,11 @@
 package is.hail.expr.ir.functions
 
 import is.hail.annotations._
-import is.hail.asm4s
 import is.hail.asm4s._
 import is.hail.expr.ir._
 import is.hail.expr.types._
 import is.hail.utils._
 import is.hail.asm4s.coerce
-import is.hail.variant.Call
 
 import scala.collection.mutable
 import scala.reflect._
