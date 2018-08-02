@@ -199,8 +199,8 @@ object Pretty {
             case MatrixExplodeCols(_, path) => prettyIdentifiers(path)
             case MatrixChooseCols(_, oldIndices) => prettyInts(oldIndices)
             case MatrixMapCols(_, _, newKey) => prettyStringsOpt(newKey)
-            case MatrixMapRows(_, _, newKey) =>
-              prettyStringsOpt(newKey.map(_._1)) + " " + prettyStringsOpt(newKey.map(_._2))
+            case MatrixMapRows(_, _, newKey, shuffle) =>
+              prettyStringsOpt(newKey.map(_._1)) + " " + prettyStringsOpt(newKey.map(_._2)) + " " + prettyBooleanLiteral(shuffle)
             case TableImport(paths, _, _) =>
               if (paths.length == 1)
                 paths.head

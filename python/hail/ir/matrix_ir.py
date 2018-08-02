@@ -172,16 +172,18 @@ class MatrixFilterEntries(MatrixIR):
         return '(MatrixFilterEntries {} {})'.format(self.child, self.pred)
 
 class MatrixMapRows(MatrixIR):
-    def __init__(self, child, new_row, new_key):
+    def __init__(self, child, new_row, new_key, shuffle=False):
         super().__init__()
         self.child = child
         self.new_row = new_row
         self.new_key = new_key
+        self.shuffle = shuffle
 
     def __str__(self):
-        return '(MatrixMapEntries {} {} {})'.format(
-            '(' + ' '.join([escape_id(f) for (f, _) in self.new_key]) if self.new_key else 'None',
-            '(' + ' '.join([escape_id(f) for (_, f) in self.new_key]) if self.new_key else 'None',
+        return '(MatrixMapRows {} {} {} {} {})'.format(
+            '(' + ' '.join([escape_id(f) for (f, _) in self.new_key]) + ")" if self.new_key else 'None',
+            '(' + ' '.join([escape_id(f) for (_, f) in self.new_key]) + ")" if self.new_key else 'None',
+            self.shuffle,
             self.child, self.new_row)
 
 class MatrixMapGlobals(MatrixIR):

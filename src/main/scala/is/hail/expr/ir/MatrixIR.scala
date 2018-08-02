@@ -1104,13 +1104,13 @@ case class MatrixMapEntries(child: MatrixIR, newEntries: IR) extends MatrixIR {
   }
 }
 
-case class MatrixMapRows(child: MatrixIR, newRow: IR, newKey: Option[(IndexedSeq[String], IndexedSeq[String])]) extends MatrixIR {
+case class MatrixMapRows(child: MatrixIR, newRow: IR, newKey: Option[(IndexedSeq[String], IndexedSeq[String])], shuffle: Boolean = true) extends MatrixIR {
 
   def children: IndexedSeq[BaseIR] = Array(child, newRow)
 
   def copy(newChildren: IndexedSeq[BaseIR]): MatrixMapRows = {
     assert(newChildren.length == 2)
-    MatrixMapRows(newChildren(0).asInstanceOf[MatrixIR], newChildren(1).asInstanceOf[IR], newKey)
+    MatrixMapRows(newChildren(0).asInstanceOf[MatrixIR], newChildren(1).asInstanceOf[IR], newKey, shuffle)
   }
 
   val newRVRow = InsertFields(newRow, Seq(
@@ -1303,9 +1303,14 @@ case class MatrixMapRows(child: MatrixIR, newRow: IR, newKey: Option[(IndexedSeq
     }
 
     val newRVD = if (newKey.isDefined) {
-      OrderedRVD.coerce(
-        typ.orvdType,
-        prev.rvd.mapPartitionsWithIndex(typ.rvRowType, mapPartitionF))
+      if (shuffle) {
+        OrderedRVD.shuffle(
+          typ.orvdType,
+          prev.rvd.mapPartitionsWithIndex(typ.rvRowType, mapPartitionF))
+      } else
+        OrderedRVD.coerce(
+          typ.orvdType,
+          prev.rvd.mapPartitionsWithIndex(typ.rvRowType, mapPartitionF))
     } else {
       prev.rvd.mapPartitionsWithIndexPreservesPartitioning(typ.orvdType, mapPartitionF)
     }

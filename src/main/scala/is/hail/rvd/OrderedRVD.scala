@@ -854,6 +854,32 @@ object OrderedRVD {
 
   def shuffle(
     typ: OrderedRVDType,
+    rvd: RVD
+  ): OrderedRVD = shuffle(typ, rvd.crdd)
+
+  def shuffle(
+    typ: OrderedRVDType,
+    crdd: ContextRDD[RVDContext, RegionValue]
+  ): OrderedRVD = {
+    val pkis = getPartitionKeyInfo(typ, getKeys(typ, crdd))
+    if (pkis.isEmpty)
+      empty(crdd.sparkContext, typ)
+    else {
+      val ranges = calculateKeyRanges(typ, pkis, crdd.getNumPartitions)
+      if (ranges.isEmpty)
+        empty(crdd.sparkContext, typ)
+      else {
+        val partitioner = new OrderedRVDPartitioner(
+          typ.partitionKey,
+          typ.kType,
+          ranges)
+        shuffle(typ, partitioner, crdd)
+      }
+    }
+  }
+
+  def shuffle(
+    typ: OrderedRVDType,
     partitioner: OrderedRVDPartitioner,
     rvd: RVD
   ): OrderedRVD = shuffle(typ, partitioner, rvd.crdd)

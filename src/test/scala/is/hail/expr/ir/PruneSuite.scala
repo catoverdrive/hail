@@ -316,7 +316,7 @@ class PruneSuite extends SparkSuite {
 
   @Test def testMatrixMapRowsMemo() {
     val mmr = MatrixMapRows(mat, matrixRefStruct(mat.typ, "global.g1", "sa.c2", "va.r2", "g.e2"),
-      Some(IndexedSeq(), IndexedSeq()))
+      Some(IndexedSeq(), IndexedSeq()), false)
     checkMemo(mmr, subsetMatrixTable(mmr.typ, "sa.c3", "va.foo"),
       Array(subsetMatrixTable(mat.typ, "global.g1", "sa.c2", "va.r2", "g.e2", "sa.c3"), null))
   }
@@ -559,7 +559,7 @@ class PruneSuite extends SparkSuite {
 
   @Test def testMatrixMapRowsRebuild() {
     val mmr = MatrixMapRows(mr, matrixRefStruct(mr.typ, "sa.c2", "va.r2"),
-      Some(FastIndexedSeq("foo"), FastIndexedSeq()))
+      Some(FastIndexedSeq("foo"), FastIndexedSeq()), false)
     checkRebuild(mmr, subsetMatrixTable(mmr.typ, "global.g1", "g.e1", "va.foo"),
       (_: BaseIR, r: BaseIR) => {
         val mmr = r.asInstanceOf[MatrixMapRows]
