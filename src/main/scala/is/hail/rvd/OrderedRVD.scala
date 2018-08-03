@@ -819,6 +819,8 @@ object OrderedRVD {
     }
     if (pkOrd.compare(ab.last, max) != 0)
       ab += max
+    if (ab.size < 2)
+      ab += max
     val partitionEdges = ab.result()
     assert(partitionEdges.length <= nPartitions + 1)
 
