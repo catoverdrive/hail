@@ -1344,7 +1344,7 @@ class SplitMulti(object):
     for each split variant.
     """
 
-    @typecheck_method(ds=MatrixTable,
+    @typecheck_method(ds=oneof(MatrixTable, Table),
                       keep_star=bool,
                       left_aligned=bool)
     def __init__(self, ds, keep_star=False, left_aligned=False):
@@ -1366,6 +1366,7 @@ class SplitMulti(object):
         """
         require_row_key_variant(ds, "SplitMulti")
         self._ds = ds
+        self._is_table = isinstance(ds, Table)
         self._keep_star = keep_star
         self._left_aligned = left_aligned
         self._entry_fields = None
@@ -1381,7 +1382,7 @@ class SplitMulti(object):
         self._new_fields = construct_reference(self._new_id,
                                                hl.tstruct(**tfields),
                                                self._ds._row_indices,
-                                               prefix='va')
+                                               prefix='row' if self._is_table else 'va')
 
     def new_locus(self):
         """The new, split variant locus.
@@ -1428,7 +1429,8 @@ class SplitMulti(object):
         """
         if self._row_fields is None:
             self._row_fields = kwargs
-            for key in self._ds._row_key.keys():
+            keys = self._ds._key if self._is_table else self._ds._row_key
+            for key in keys.keys():
                 if key in kwargs.keys():
                     raise FatalError(
                         "SplitMulti cannot manually update '{}' field.".format(key))
@@ -1442,6 +1444,8 @@ class SplitMulti(object):
         ----
         May only be called once.
         """
+        if self._is_table:
+            raise FatalError("SplitMulti cannot update entries on a table")
         if self._entry_fields is None:
             self._entry_fields = kwargs
         else:
@@ -1462,7 +1466,7 @@ class SplitMulti(object):
             self._entry_fields = {}
 
         unmod_row_fields = set(self._ds.row) - set(self._row_fields) - {'locus', 'alleles', 'a_index', 'was_split'}
-        unmod_entry_fields = set(self._ds.entry) - set(self._entry_fields)
+        unmod_entry_fields = set() if self._is_table else set(self._ds.entry) - set(self._entry_fields)
 
         for name, fds in [('row', unmod_row_fields), ('entry', unmod_entry_fields)]:
             if fds:
@@ -1480,7 +1484,35 @@ class SplitMulti(object):
         def cleanup(mt):
             return cleanup_joins(mt).drop(self._new_id)
 
-        old_row = base._rvrow
+        if self._is_table:
+            old_row = base.row
+            row_annotations = str(self._ds.row.annotate(**self._row_fields)._ir)
+
+            def split_rows(expr, new_key_opt):
+                jt = (base.annotate(**{self._new_id: expr})
+                      .explode(self._new_id))._jt
+                if new_key_opt is not None:
+                    jt = (jt.keyBy(None)
+                          .select(row_annotations, None, None)
+                          .keyBy(new_key_opt[0] + new_key_opt[1],
+                                 new_key_opt[0]))
+                else:
+                    jt = jt.select(row_annotations, ['locus', 'alleles'], 2)
+                return cleanup(Table(jt))
+
+        else:
+            old_row = base._rvrow
+            entry_annotations = str(self._ds.entry.annotate(**self._entry_fields)._ir)
+            row_annotations = str(self._ds._rvrow.annotate(**self._row_fields)._ir)
+
+            def split_rows(expr, new_key_opt):
+                mt = (base.annotate_rows(**{self._new_id: expr})
+                      .explode_rows(self._new_id))
+                return cleanup(
+                    MatrixTable(mt._jvds
+                                .selectEntries(entry_annotations)
+                                .selectRows(row_annotations, new_key_opt)))
+
         kept_alleles = hl.range(1, hl.len(old_row.alleles))
         if not self._keep_star:
             kept_alleles = kept_alleles.filter(lambda i: old_row.alleles[i] != "*")
@@ -1490,17 +1522,6 @@ class SplitMulti(object):
                              locus=variant[0],
                              a_index=i,
                              was_split=hl.len(old_row.alleles) > 2)
-
-        entry_annotations = str(self._ds.entry.annotate(**self._entry_fields)._ir)
-        row_annotations = str(self._ds._rvrow.annotate(**self._row_fields)._ir)
-
-        def split_rows(expr, new_key_opt):
-            mt = (base.annotate_rows(**{self._new_id: expr})
-                  .explode_rows(self._new_id))
-            return cleanup(
-                MatrixTable(mt._jvds
-                            .selectEntries(entry_annotations)
-                            .selectRows(row_annotations, new_key_opt)))
 
         if self._left_aligned:
             def make_struct(i):
@@ -1525,7 +1546,11 @@ class SplitMulti(object):
 
             left = split_rows(make_array(lambda locus: locus == base['locus']), None)
             moved = split_rows(make_array(lambda locus: locus != base['locus']), [['locus'], ['alleles']])
-        return left.union_rows(moved)
+
+        if self._is_table:
+            return left.union(moved)
+        else:
+            return left.union_rows(moved)
 
 
 @typecheck(ds=MatrixTable,
