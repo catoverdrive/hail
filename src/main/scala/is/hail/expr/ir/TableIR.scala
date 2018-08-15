@@ -1203,3 +1203,27 @@ case class LocalizeEntries(child: MatrixIR, entriesFieldName: String) extends Ta
     TableValue(typ, prev.globals, prev.rvd.updateType(prev.rvd.typ.copy(rowType = newRowType)))
   }
 }
+
+case class TableFilterIntervals(
+  child: TableIR,
+  intervals: BroadcastIndexedSeq,
+  keep: Boolean
+) extends TableIR {
+  require(child.typ.keyType.isDefined && child.typ.keyType.forall(_.canCompare(coerce[TInterval](intervals.t.elementType).pointType)))
+
+  def typ: TableType = child.typ
+
+  def children: IndexedSeq[BaseIR] = FastIndexedSeq(child)
+
+  def copy(newChildren: IndexedSeq[BaseIR]): TableFilterIntervals = {
+    val IndexedSeq(newChild: TableIR) = newChildren
+    TableFilterIntervals(newChild, intervals, keep)
+  }
+
+  def execute(hc: HailContext): TableValue = {
+    val prev = child.execute(hc)
+    val rvd = prev.enforceOrderingRVD.asInstanceOf[OrderedRVD]
+    val iTree = IntervalTree(rvd.typ.pkType.ordering, intervals.value.toArray.asInstanceOf[Array[Interval]])
+    prev.copy(rvd=rvd.filterIntervals(iTree, keep))
+  }
+}

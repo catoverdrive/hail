@@ -3,7 +3,7 @@ package is.hail.expr.ir
 import is.hail.SparkSuite
 import is.hail.expr.types._
 import is.hail.TestUtils._
-import is.hail.annotations.BroadcastRow
+import is.hail.annotations.{BroadcastIndexedSeq, BroadcastRow}
 import is.hail.asm4s.Code
 import is.hail.expr.Parser
 import is.hail.expr.ir.IRSuite.TestFunctions
@@ -560,7 +560,13 @@ class IRSuite extends SparkSuite {
         TableExplode(read, "mset"),
         TableUnkey(read),
         TableOrderBy(TableUnkey(read), FastIndexedSeq(SortField("m", Ascending), SortField("m", Descending))),
-        LocalizeEntries(mtRead, " # entries")
+        LocalizeEntries(mtRead, " # entries"),
+        TableFilterIntervals(TableRange(100, 10),
+          BroadcastIndexedSeq(
+            FastIndexedSeq(Interval(Row(0), Row(1), true, false)),
+            TArray(TInterval(TStruct("idx" -> TInt32()))),
+            sc),
+          keep=true)
       )
       xs.map(x => Array(x))
     } catch {
@@ -636,7 +642,13 @@ class IRSuite extends SparkSuite {
           MatrixColsTable(read),
           "all of the entries"),
         MatrixAnnotateColsTable(read, tableRead, "uid_123"),
-        MatrixAnnotateRowsTable(read, tableRead, "uid_123", Some(FastIndexedSeq(I32(1))))
+        MatrixAnnotateRowsTable(read, tableRead, "uid_123", Some(FastIndexedSeq(I32(1)))),
+        MatrixFilterIntervals(range,
+          BroadcastIndexedSeq(
+            FastIndexedSeq(Interval(Row(0), Row(1), true, false)),
+            TArray(TInterval(TStruct("idx" -> TInt32()))),
+            sc),
+          keep=true)
       )
 
       xs.map(x => Array(x))

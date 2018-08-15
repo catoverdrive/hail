@@ -1,6 +1,8 @@
 import json
+from hail.ir.value import Value
 from hail.ir.base_ir import *
 from hail.utils.java import escape_str, escape_id, parsable_strings
+from hail.typecheck import typecheck_method
 
 class MatrixAggregateRowsByKey(MatrixIR):
     def __init__(self, child, expr):
@@ -307,6 +309,7 @@ class MatrixAnnotateRowsTable(MatrixIR):
             key_strs = ' '.join(str(x) for x in self.key)
         return f'(MatrixAnnotateRowsTable "{self.root}" {key_bool} {self.child} {self.table} {key_strs})'
 
+
 class MatrixAnnotateColsTable(MatrixIR):
     def __init__(self, child, table, root):
         super().__init__()
@@ -316,3 +319,15 @@ class MatrixAnnotateColsTable(MatrixIR):
 
     def __str__(self):
         return f'(MatrixAnnotateColsTable "{self.root}" {self.child} {self.table})'
+
+
+class MatrixFilterIntervals(MatrixIR):
+    @typecheck_method(child=MatrixIR, intervals=Value, keep=bool)
+    def __init__(self, child, intervals, keep):
+        super().__init__()
+        self.child = child
+        self.intervals = intervals
+        self.keep = keep
+
+    def __str__(self):
+        return '(MatrixFilterIntervals {} {} {})'.format(self.intervals, self.keep, self.child)

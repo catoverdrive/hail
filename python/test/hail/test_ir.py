@@ -97,14 +97,15 @@ class ValueIRTests(unittest.TestCase):
 
 
 class TableIRTests(unittest.TestCase):
+
     def table_irs(self):
         b = ir.TrueIR()
         table_read = ir.TableRead(
-            'src/test/resources/backward_compatability/1.0.0/table/0.ht', False, None)
+            resource('backward_compatability/1.0.0/table/0.ht'), False, None)
         table_read_row_type = hl.dtype('struct{idx: int32, f32: float32, i64: int64, m: float64, astruct: struct{a: int32, b: float64}, mstruct: struct{x: int32, y: str}, aset: set<str>, mset: set<float64>, d: dict<array<str>, float64>, md: dict<int32, str>, h38: locus<GRCh38>, ml: locus<GRCh37>, i: interval<locus<GRCh37>>, c: call, mc: call, t: tuple(call, str, str), mt: tuple(locus<GRCh37>, bool)}')
 
         matrix_read = ir.MatrixRead(
-            'src/test/resources/backward_compatability/1.0.0/matrix_table/0.hmt', False, False)
+            resource('backward_compatability/1.0.0/matrix_table/0.hmt'), False, False)
 
         range = ir.TableRange(10, 4)
         table_irs = [
@@ -149,7 +150,15 @@ class TableIRTests(unittest.TestCase):
             ir.TableHead(table_read, 10),
             ir.TableOrderBy(ir.TableUnkey(table_read), [('m', 'A'), ('m', 'D')]),
             ir.TableDistinct(table_read),
-            ir.LocalizeEntries(matrix_read, '__entries')
+            ir.LocalizeEntries(matrix_read, '__entries'),
+            ir.TableFilterIntervals(
+                ir.TableRange(5, 1),
+                ir.Value(hl.tarray(hl.tinterval(hl.tstruct(idx=hl.tint32))),
+                         [{'start': {'idx': 0},
+                           'end': {'idx': 0},
+                           'includeStart': True,
+                           'includeEnd': False}]),
+                True)
         ]
 
         return table_irs
@@ -158,7 +167,10 @@ class TableIRTests(unittest.TestCase):
         for x in self.table_irs():
             Env.hail().expr.Parser.parse_table_ir(str(x))
 
-    def test_matrix_ir_parses(self):
+
+class MatrixIRTests(unittest.TestCase):
+
+    def matrix_irs(self):
         matrix_read = ir.MatrixRead(
             resource('backward_compatability/1.0.0/matrix_table/0.hmt'), False, False)
         table_read = ir.TableRead(resource('backward_compatability/1.0.0/table/0.ht'), False, None)
@@ -189,10 +201,22 @@ class TableIRTests(unittest.TestCase):
             ir.MatrixExplodeCols(matrix_read, ['col_aset']),
             ir.MatrixAnnotateRowsTable(matrix_read, table_read, '__foo', None),
             ir.MatrixAnnotateColsTable(matrix_read, table_read, '__foo'),
+            ir.MatrixFilterIntervals(
+                ir.MatrixRange(5, 5, 1),
+                ir.Value(hl.tarray(hl.tinterval(hl.tstruct(row_idx=hl.tint32))),
+                         [{'start': {'row_idx': 0},
+                           'end': {'row_idx': 0},
+                           'includeStart': True,
+                           'includeEnd': False}]),
+                True)
         ]
 
-        for x in matrix_irs:
+        return matrix_irs
+
+    def test_parses(self):
+        for x in self.matrix_irs():
             try:
                 Env.hail().expr.Parser.parse_matrix_ir(str(x))
             except Exception as e:
                 raise ValueError(str(x)) from e
+

@@ -1,7 +1,7 @@
 package is.hail.expr
 
 import is.hail.HailContext
-import is.hail.annotations.BroadcastRow
+import is.hail.annotations.{BroadcastIndexedSeq, BroadcastRow}
 import is.hail.expr.ir.{AggSignature, IR, MatrixIR, TableIR}
 import is.hail.expr.types._
 import is.hail.rvd.OrderedRVDType
@@ -627,6 +627,11 @@ object Parser extends JavaTokenParsers {
       "TableExplode" ~> identifier ~ table_ir ^^ { case field ~ child => ir.TableExplode(child, field) } |
       "LocalizeEntries" ~> string_literal ~ matrix_ir ^^ { case field ~ child =>
         ir.LocalizeEntries(child, field)
+      } |
+      "TableFilterIntervals" ~> ir_value ~ boolean_literal ~ table_ir ^^ { case ((t, v)) ~ keep ~ child =>
+        ir.TableFilterIntervals(child,
+          BroadcastIndexedSeq(v.asInstanceOf[IndexedSeq[Any]], t.asInstanceOf[TArray], HailContext.get.sc),
+          keep)
       }
 
   def matrix_ir: Parser[ir.MatrixIR] = "(" ~> matrix_ir_1 <~ ")"
@@ -676,6 +681,11 @@ object Parser extends JavaTokenParsers {
       "MatrixUnionRows" ~> matrix_ir_children ^^ { children => ir.MatrixUnionRows(children) } |
       "UnlocalizeEntries" ~> string_literal ~ table_ir ~ table_ir ^^ {
         case entryField ~ rowsEntries ~ cols => ir.UnlocalizeEntries(rowsEntries, cols, entryField)
+      } |
+      "MatrixFilterIntervals" ~> ir_value ~ boolean_literal ~ matrix_ir ^^ { case ((t, v)) ~ keep ~ child =>
+        ir.MatrixFilterIntervals(child,
+          BroadcastIndexedSeq(v.asInstanceOf[IndexedSeq[Any]], t.asInstanceOf[TArray], HailContext.get.sc),
+          keep)
       }
 
   def parse_value_ir(s: String, ref_map: Map[String, Type]): IR = parse(ir_value_expr(ref_map), s)

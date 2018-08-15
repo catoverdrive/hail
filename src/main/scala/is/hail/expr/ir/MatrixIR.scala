@@ -2421,3 +2421,29 @@ case class UnlocalizeEntries(rowsEntries: TableIR, cols: TableIR, entryFieldName
     )
   }
 }
+
+case class MatrixFilterIntervals(
+  child: MatrixIR,
+  intervals: BroadcastIndexedSeq,
+  keep: Boolean
+) extends MatrixIR {
+  val pointType = coerce[TInterval](intervals.t.elementType).pointType
+  require(child.typ.rowKeyStruct.canCompare(pointType))
+
+  def typ: MatrixType = child.typ
+
+  def children: IndexedSeq[BaseIR] = FastIndexedSeq(child)
+
+  def copy(newChildren: IndexedSeq[BaseIR]): MatrixFilterIntervals = {
+    val IndexedSeq(newChild: MatrixIR) = newChildren
+    MatrixFilterIntervals(newChild, intervals, keep)
+  }
+
+  override def columnCount: Option[Int] = child.columnCount
+
+  def execute(hc: HailContext): MatrixValue = {
+    val prev = child.execute(hc)
+    val iTree = IntervalTree(prev.rvd.typ.pkType.ordering, intervals.value.toArray.asInstanceOf[Array[Interval]])
+    prev.copy(rvd=prev.rvd.filterIntervals(iTree, keep))
+  }
+}

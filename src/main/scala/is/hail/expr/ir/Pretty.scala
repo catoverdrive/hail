@@ -285,6 +285,20 @@ object Pretty {
               (if (sf.sortOrder == Ascending) "A" else "D") + sf.field))
             case LocalizeEntries(_, name) => prettyStringLiteral(name)
             case UnlocalizeEntries(_, _, name) => prettyStringLiteral(name)
+            case TableFilterIntervals(_, intervals, keep) =>
+              intervals.t.parsableString() + " " +
+                prettyStringLiteral(
+                  JsonMethods.compact(
+                    JSONAnnotationImpex.exportAnnotation(
+                      intervals.value, intervals.t))) +
+                " " + prettyBooleanLiteral(keep)
+            case MatrixFilterIntervals(_, intervals, keep) =>
+              intervals.t.parsableString() + " " +
+                prettyStringLiteral(
+                  JsonMethods.compact(
+                    JSONAnnotationImpex.exportAnnotation(
+                      intervals.value, intervals.t))) +
+                " " + prettyBooleanLiteral(keep)
             case _ => ""
           }
 

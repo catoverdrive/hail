@@ -1,6 +1,8 @@
 import json
 
+from hail.ir.value import Value
 from hail.ir.base_ir import *
+from hail.typecheck import typecheck_method
 from hail.utils.java import escape_str, escape_id
 
 
@@ -241,6 +243,7 @@ class TableRepartition(TableIR):
     def __str__(self):
         return f'(TableRepartition {self.n} {self.shuffle} {self.child})'
 
+
 class LocalizeEntries(TableIR):
     def __init__(self, child, entry_field_name):
         super().__init__()
@@ -249,3 +252,15 @@ class LocalizeEntries(TableIR):
 
     def __str__(self):
         return f'(LocalizeEntries "{escape_str(self.entry_field_name)}" {self.child})'
+
+
+class TableFilterIntervals(TableIR):
+    @typecheck_method(child=TableIR, intervals=Value, keep=bool)
+    def __init__(self, child, intervals, keep):
+        super().__init__()
+        self.child = child
+        self.intervals = intervals
+        self.keep = keep
+
+    def __str__(self):
+        return '(TableFilterIntervals {} {} {})'.format(self.intervals, self.keep, self.child)
