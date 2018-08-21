@@ -321,6 +321,10 @@ object Simplify {
         TableAggregateByKey(child, expr)
       case TableAggregateByKey(TableKeyBy(child, keys, _, _), expr) =>
         TableKeyByAndAggregate(child, expr, MakeStruct(keys.map(k => k -> GetField(Ref("row", child.typ.rowType), k))))
+      case MatrixRowsTable(MatrixFilterIntervals(child, intervals, keep)) =>
+        TableFilterIntervals(MatrixRowsTable(child), intervals, keep)
+      case MatrixFilterIntervals(MatrixMapRows(child, newRow, None), intervals, keep) =>
+        MatrixMapRows(MatrixFilterIntervals(child, intervals, keep), newRow, None)
     })
   }
 }

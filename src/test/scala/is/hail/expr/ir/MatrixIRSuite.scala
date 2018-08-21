@@ -6,6 +6,7 @@ import is.hail.expr.types._
 import is.hail.table.Table
 import is.hail.utils._
 import is.hail.TestUtils._
+import is.hail.annotations.BroadcastIndexedSeq
 import is.hail.variant.MatrixTable
 import org.apache.spark.sql.Row
 import org.testng.annotations.{DataProvider, Test}
@@ -158,6 +159,7 @@ class MatrixIRSuite extends SparkSuite {
     val keyNames = IndexedSeq("idx")
     Table(hc, rowRdd, rowSig, Some(keyNames))
   }
+
   def getLocalizedCols: Table = {
     val cdata = Array(
       Array(1, "atag"),
@@ -241,5 +243,30 @@ class MatrixIRSuite extends SparkSuite {
         assert(e.getCause.getMessage.contains("missing"))
       }
     }
+  }
+
+  @Test def testMatrixFilterIntervals() {
+    val intervals = BroadcastIndexedSeq(
+      FastIndexedSeq(
+        Interval(Row(0), Row(2), true, false),
+        Interval(Row(7), Row(12), true, false)),
+      TArray(TInterval(TStruct("row_idx" -> TInt32()))),
+      hc.sc)
+
+    val filterKeepIdx = getRows(
+      MatrixFilterIntervals(
+        MatrixTable.range(hc, 10, 10, Some(3)).ast,
+        intervals,
+        keep = true)).map { case Row(row_idx) => row_idx }
+
+    assert(filterKeepIdx sameElements Array(0, 1, 7, 8, 9))
+
+    val filterNoKeepIdx = getRows(
+      MatrixFilterIntervals(
+        MatrixTable.range(hc, 10, 10, Some(3)).ast,
+        intervals,
+        keep = false)).map { case Row(row_idx) => row_idx }
+
+    assert(filterNoKeepIdx sameElements Array(2, 3, 4, 5, 6))
   }
 }

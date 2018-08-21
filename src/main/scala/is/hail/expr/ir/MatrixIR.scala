@@ -2443,7 +2443,7 @@ case class MatrixFilterIntervals(
 
   def execute(hc: HailContext): MatrixValue = {
     val prev = child.execute(hc)
-    val iTree = IntervalTree(prev.rvd.typ.pkType.ordering, intervals.value.toArray.asInstanceOf[Array[Interval]])
+    val iTree = IntervalTree(prev.rvd.typ.pkType.ordering, intervals.value.toArray.map(_.asInstanceOf[Interval]))
     prev.copy(rvd=prev.rvd.filterIntervals(iTree, keep))
   }
 }

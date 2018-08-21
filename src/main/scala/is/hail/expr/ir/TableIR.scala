@@ -1223,7 +1223,7 @@ case class TableFilterIntervals(
   def execute(hc: HailContext): TableValue = {
     val prev = child.execute(hc)
     val rvd = prev.enforceOrderingRVD.asInstanceOf[OrderedRVD]
-    val iTree = IntervalTree(rvd.typ.pkType.ordering, intervals.value.toArray.asInstanceOf[Array[Interval]])
+    val iTree = IntervalTree(rvd.typ.pkType.ordering, intervals.value.toArray.map(_.asInstanceOf[Interval]))
     prev.copy(rvd=rvd.filterIntervals(iTree, keep))
   }
 }

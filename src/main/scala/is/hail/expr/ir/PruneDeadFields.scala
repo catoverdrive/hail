@@ -363,6 +363,8 @@ object PruneDeadFields {
           globalType = requestedType.globalType,
           rvRowType = unify(child.typ.rvRowType, minChild.rvRowType, requestedType.rowType.rename(m)))
         memoizeMatrixIR(child, childDep, memo)
+      case TableFilterIntervals(child, intervals, keep) =>
+        memoizeTableIR(child, unify(child.typ, requestedType), memo)
     }
   }
 
@@ -563,6 +565,8 @@ object PruneDeadFields {
           rowType = unify(cols.typ.rowType, requestedType.colType),
           globalType = minCols.globalType)
         memoizeTableIR(cols, colDep, memo)
+      case MatrixFilterIntervals(child, intervals, keep) =>
+        memoizeMatrixIR(child, unify(child.typ, requestedType), memo)
     }
   }
 
