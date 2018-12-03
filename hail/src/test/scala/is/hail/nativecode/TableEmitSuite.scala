@@ -26,7 +26,8 @@ class TableEmitSuite extends SparkSuite {
         ir.True())
 
     val tub = new TranslationUnitBuilder()
-    TableEmit(tub, tir(read)).write(tub, writePath, true, false, CodecSpec.default.toString)
+    val irt = tir(read)
+    TableEmit(tub, irt).write(irt.typ, writePath, true, false, CodecSpec.default.toString)
 
     val expected = new Table(hc, tir(rt.tir))
     val result = Table.read(hc, writePath)

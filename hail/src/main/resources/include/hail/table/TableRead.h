@@ -2,7 +2,7 @@
 #define HAIL_TABLEREAD_H 1
 
 #include "hail/table/TableEmit.h"
-#include "hail/table/NativeStatus.h"
+#include "hail/NativeStatus.h"
 
 namespace hail {
 
@@ -12,11 +12,11 @@ class TableNativeRead {
   private:
     Decoder dec_;
     PartitionContext * ctx_;
-    char * value_ = nullptr;
+    char const * value_ = nullptr;
     bool advance() {
-      if (dec_.decode_byte(ctx_->st_)) {
-        ctx_.new_region();
-        value_ = dec_.decode_row(ctx_->, ctx_->region);
+      if (dec_.decode_byte()) {
+        ctx_->new_region();
+        value_ = dec_.decode_row(ctx_->region_.get());
       } else {
         value_ = nullptr;
       }
@@ -24,9 +24,9 @@ class TableNativeRead {
     }
 
   public:
-    TableNativeRead(Decoder dec, NativeStatus* st) : dec_(dec), ctx_(st) {
-      if (dec_.decode_byte(ctx_->st_)) {
-        value_ = dec_.decode_row(ctx_->, ctx_->region);
+    TableNativeRead(Decoder dec, PartitionContext * ctx) : dec_(dec), ctx_(ctx) {
+      if (dec_.decode_byte()) {
+        value_ = dec_.decode_row(ctx_->region_.get());
       }
     }
 };

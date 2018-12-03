@@ -2,7 +2,7 @@
 #define HAIL_TABLEEXPLODE_H 1
 
 #include "hail/table/TableEmit.h"
-#include "hail/table/NativeStatus.h"
+#include "hail/NativeStatus.h"
 
 namespace hail {
 
@@ -13,8 +13,8 @@ class TableExplodeRows {
     Prev:TablePartitionIterator it_;
     Prev:TablePartitionIterator end_;
     PartitionContext * ctx_;
-    char * value_ = nullptr;
-    char * exploded_ = nullptr;
+    char const * value_ = nullptr;
+    char const * exploded_ = nullptr;
     Exploder exploder_;
     //exploder_.at_end;
     //exploder_.create_iterator(st, &&oldregion, it_)
