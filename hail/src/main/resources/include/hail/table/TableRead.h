@@ -8,7 +8,7 @@ namespace hail {
 
 template<typename Decoder>
 class TableNativeRead {
-  template<typename> friend class TablePartitionRange;
+  friend class TablePartitionRange<TableNativeRead>;
   private:
     Decoder dec_;
     PartitionContext * ctx_;

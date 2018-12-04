@@ -8,7 +8,7 @@ namespace hail {
 
 template<typename Prev, typename Filter>
 class TableFilterRows {
-  template<typename> friend class TablePartitionRange;
+  friend class TablePartitionRange<TableFilterRows>;
   private:
     typename Prev::Iterator it_;
     typename Prev::Iterator end_;
@@ -19,7 +19,7 @@ class TableFilterRows {
       while (it_ != end_ && !filter_(ctx_->st_, ctx_->region_.get(), ctx_->globals_, *it_)) {
         ++it_;
       }
-      return *it_;
+      return it_ == end_ ? nullptr : *it_;
     }
     bool advance() {
       ++it_;

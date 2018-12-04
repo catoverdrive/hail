@@ -7,6 +7,7 @@ import is.hail.annotations.{BroadcastRow, Region, RegionValueBuilder}
 import is.hail.expr.{JSONAnnotationImpex, ir}
 import is.hail.expr.types.TableType
 import is.hail.expr.types.physical.PStruct
+import is.hail.expr.types.virtual.TInt32
 import is.hail.io.CodecSpec
 import is.hail.nativecode.{NativeModule, NativeStatus, ObjectArray}
 import is.hail.rvd.{AbstractRVDSpec, OrderedRVDSpec, RVDPartitioner, RVDType}
@@ -146,7 +147,7 @@ case class TableEmitTriplet(t: PartitionEmitTriplet, baseRDD: RDD[Long], partiti
 
     t.write(codecSpec)
 
-    val mod = ctx.tub.end().build("-O2 -llz4", System.out)
+    val mod = ctx.tub.end().build("-O2 -llz4")
     val modKey = mod.getKey
     val modBinary = mod.getBinary
     val gtyp = typ.globalType
@@ -308,6 +309,59 @@ class TableEmitter(tub: TranslationUnitBuilder) {
        """.stripMargin
 
         prev.copy(t = prevPartition.copy(setup = setup, range = range))
+      case x@ir.TableExplode(child, fname) =>
+        val prev = emit(child)
+        val ctx = prev.t.ctx
+        tub.include("hail/table/TableExplodeRows.h")
+        val exploder = tub.buildClass(genSym("Exploder"))
+
+        val lenF = exploder.buildMethod("len",
+          Array("NativeStatus*" -> "st",
+            "Region*" -> "region",
+            "const char *" -> "row"), "int")
+        val lenEnv = ir.Env.empty[ir.IR]
+          .bind("row", ir.In(1, child.typ.rowType))
+        val lent = Emit(lenF, 1, ir.Subst(x.lengthIR, lenEnv))
+        lenF +=
+          s"""
+             |${ lent.setup }
+             |return (${ lent.m }) ? 0 : (${ lent.v });
+           """.stripMargin
+        lenF.end()
+
+        val explodeF = exploder.buildMethod("operator()",
+          Array("NativeStatus*" -> "st",
+            "Region*" -> "region",
+            "const char *" -> "row",
+            "int" -> "i"), "const char *")
+        val substEnv = ir.Env.empty[ir.IR]
+          .bind("row", ir.In(1, child.typ.rowType))
+          .bind("i", ir.In(2, TInt32()))
+        val et = Emit(explodeF, 1, ir.Subst(x.insertIR, substEnv))
+        explodeF +=
+          s"""
+             |${ et.setup }
+             |if (${ et.m }) {
+             |  ${ explodeF.nativeError(1011, "\"exploded row can't be missing!\"") }
+             |} else {
+             |  return ${ et.v };
+             |}
+           """.stripMargin
+        explodeF.end()
+        exploder.end()
+
+        val range = Variable("map_range",
+          s"TablePartitionRange<TableExplodeRows<${ prev.t.range.typ }, ${ exploder.name }>>",
+          s"{&${ ctx.cxxCtx }, ${ prev.t.range }}")
+
+        val setup =
+          s"""
+             |${ prev.t.setup }
+             |${ range.define }""".stripMargin
+
+        val newPet = PartitionEmitTriplet(ctx, setup, range, x.typ.rowType.physicalType.asInstanceOf[PStruct])
+        prev.copy(t = newPet)
+
       case _ =>
         throw new CXXUnsupportedOperation(ir.Pretty(x))
     }

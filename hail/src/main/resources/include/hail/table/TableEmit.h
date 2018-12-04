@@ -1,6 +1,8 @@
 #ifndef HAIL_TABLEEMIT_H
 #define HAIL_TABLEEMIT_H 1
 #include "hail/RegionPool.h"
+#include "hail/Utils.h"
+#include <string>
 
 namespace hail {
 

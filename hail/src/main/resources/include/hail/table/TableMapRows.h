@@ -3,22 +3,22 @@
 
 #include "hail/table/TableEmit.h"
 #include "hail/NativeStatus.h"
+#include "hail/Utils.h"
 
 namespace hail {
 
 template<typename Prev, typename Mapper>
 class TableMapRows {
-  template<typename> friend class TablePartitionRange;
+  friend class TablePartitionRange<TableMapRows>;
   private:
     typename Prev::Iterator it_;
     typename Prev::Iterator end_;
     PartitionContext * ctx_;
-    char const * value_ = nullptr;
     Mapper mapper_{};
-
+    char const * value_ = nullptr;
     bool advance() {
       ++it_;
-      if (it_ != end_) {
+      if (LIKELY(it_ != end_)) {
         value_ = mapper_(ctx_->st_, ctx_->region_.get(), ctx_->globals_, *it_);
       } else {
         value_ = nullptr;
@@ -30,7 +30,11 @@ class TableMapRows {
     TableMapRows(PartitionContext * ctx, Prev & prev) :
     it_(prev.begin()),
     end_(prev.end()),
-    ctx_(ctx) { value_ = mapper_(ctx_->st_, ctx_->region_.get(), ctx_->globals_, *it_); }
+    ctx_(ctx) {
+      if (LIKELY(it_ != end_)) {
+        value_ = mapper_(ctx_->st_, ctx_->region_.get(), ctx_->globals_, *it_);
+      }
+    }
 };
 
 }
