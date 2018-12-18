@@ -1,6 +1,6 @@
 package is.hail.expr.ir
 
-import is.hail.{HailContext, Uploader, stats}
+import is.hail.{HailContext, Uploader, cxx, stats}
 import is.hail.annotations.aggregators.RegionValueAggregator
 import is.hail.annotations._
 import is.hail.asm4s.AsmFunction3
@@ -39,7 +39,17 @@ object Interpret {
     else
       lowered
 
-    lowopt.execute(HailContext.get)
+    if (HailContext.get.flags.get("cpp") != null) {
+      try {
+        cxx.Execute(lowopt)
+      } catch {
+        case _: cxx.CXXUnsupportedOperation =>
+          lowopt.execute(HailContext.get)
+        case e => throw e
+      }
+    } else {
+      lowopt.execute(HailContext.get)
+    }
   }
 
   def apply(mir: MatrixIR): MatrixValue =
@@ -90,11 +100,21 @@ object Interpret {
     ir = LowerMatrixIR(ir)
     if (optimize) optimizeIR(false)
 
-    val result = apply(ir, valueEnv, args, agg, None, Memo.empty[AsmFunction3[Region, Long, Boolean, Long]]).asInstanceOf[T]
+    val result = if (HailContext.get.flags.get("cpp") != null) {
+      try {
+        cxx.Execute(ir)
+      } catch {
+        case _: cxx.CXXUnsupportedOperation =>
+          apply(ir, valueEnv, args, agg, None, Memo.empty[AsmFunction3[Region, Long, Boolean, Long]])
+        case e => throw e
+      }
+    } else {
+      apply(ir, valueEnv, args, agg, None, Memo.empty[AsmFunction3[Region, Long, Boolean, Long]])
+    }
 
     Uploader.uploadPipeline(ir0, ir)
 
-    result
+    result.asInstanceOf[T]
   }
 
   private def apply(ir: IR, env: Env[Any], args: IndexedSeq[(Any, Type)], agg: Option[Agg], aggregator: Option[TypedAggregator[Any]], functionMemo: Memo[AsmFunction3[Region, Long, Boolean, Long]]): Any = {
