@@ -1282,6 +1282,7 @@ class IRSuite extends SparkSuite {
       ApplyUnaryPrimOp(Negate(), i),
       ApplyComparisonOp(EQ(TInt32()), i, j),
       MakeArray(FastSeq(i, NA(TInt32()), I32(-3)), TArray(TInt32())),
+      MakeStream(FastSeq(i, NA(TInt32()), I32(-3)), TStream(TInt32())),
       MakeNDArray(
         MakeArray(FastSeq(F64(-1.0), F64(1.0)), TArray(TFloat64())),
         MakeArray(FastSeq(I64(1), I64(2)), TArray(TInt64())),
@@ -1290,6 +1291,7 @@ class IRSuite extends SparkSuite {
       ArrayRef(a, i),
       ArrayLen(a),
       ArrayRange(I32(0), I32(5), I32(1)),
+      StreamRange(I32(0), I32(5), I32(1)),
       ArraySort(a, b),
       ToSet(a),
       ToDict(da),

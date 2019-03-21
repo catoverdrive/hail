@@ -50,6 +50,9 @@ object Copy {
       case ArrayRange(_, _, _) =>
         val IndexedSeq(start: IR, stop: IR, step: IR) = newChildren
         ArrayRange(start, stop, step)
+      case StreamRange(_, _, _) =>
+        val IndexedSeq(start: IR, stop: IR, step: IR) = newChildren
+        StreamRange(start, stop, step)
       case MakeNDArray(_, _, _) =>
         val IndexedSeq(data: IR, shape: IR, row_major: IR) = newChildren
         MakeNDArray(data, shape, row_major)

@@ -36,11 +36,15 @@ object Children {
       Array(l, r)
     case MakeArray(args, typ) =>
       args.toFastIndexedSeq
+    case MakeStream(args, typ) =>
+      args.toFastIndexedSeq
     case ArrayRef(a, i) =>
       Array(a, i)
     case ArrayLen(a) =>
       Array(a)
     case ArrayRange(start, stop, step) =>
+      Array(start, stop, step)
+    case StreamRange(start, stop, step) =>
       Array(start, stop, step)
     case MakeNDArray(data, shape, row_major) =>
       Array(data, shape, row_major)
