@@ -9,6 +9,29 @@ object Region {
 
   def scoped[T](f: Region => T): T =
     using(Region())(f)
+
+  def loadInt(addr: Long): Int = Memory.loadInt(addr)
+  def loadLong(addr: Long): Long = Memory.loadLong(addr)
+  def loadFloat(addr: Long): Float = Memory.loadFloat(addr)
+  def loadDouble(addr: Long): Double = Memory.loadDouble(addr)
+  def loadAddress(addr: Long): Long = Memory.loadLong(addr)
+  def loadByte(addr: Long): Byte = Memory.loadByte(addr)
+  def loadBoolean(addr: Long): Boolean = if (Memory.loadByte(addr) == 0) false else true
+
+  def loadBytes(addr: Long, n: Int): Array[Byte] = {
+    val a = new Array[Byte](n)
+    Memory.copyToArray(a, 0, addr, n)
+    a
+  }
+
+  def loadBytes(addr: Long, dst: Array[Byte], dstOff: Long, n: Long): Unit = {
+    Memory.copyToArray(dst, dstOff, addr, n)
+  }
+
+  def loadBit(byteOff: Long, bitOff: Long): Boolean = {
+    val b = byteOff + (bitOff >> 3)
+    (loadByte(b) & (1 << (bitOff & 7))) != 0
+  }
 }
 
 // Off-heap implementation of Region differs from the previous
@@ -53,12 +76,12 @@ final class Region() extends NativeBase() {
   final def reference(other: Region): Unit = nativeReference(other)
   final def refreshRegion(): Unit = nativeRefreshRegion()
   
-  final def loadInt(addr: Long): Int = Memory.loadInt(addr)
-  final def loadLong(addr: Long): Long = Memory.loadLong(addr)
-  final def loadFloat(addr: Long): Float = Memory.loadFloat(addr)
-  final def loadDouble(addr: Long): Double = Memory.loadDouble(addr)
-  final def loadAddress(addr: Long): Long = Memory.loadLong(addr)
-  final def loadByte(addr: Long): Byte = Memory.loadByte(addr)
+  final def loadInt(addr: Long): Int = Region.loadInt(addr)
+  final def loadLong(addr: Long): Long = Region.loadLong(addr)
+  final def loadFloat(addr: Long): Float = Region.loadFloat(addr)
+  final def loadDouble(addr: Long): Double = Region.loadDouble(addr)
+  final def loadAddress(addr: Long): Long = Region.loadLong(addr)
+  final def loadByte(addr: Long): Byte = Region.loadByte(addr)
   
   final def storeInt(addr: Long, v: Int) = Memory.storeInt(addr, v)
   final def storeLong(addr: Long, v: Long) = Memory.storeLong(addr, v)
@@ -67,18 +90,11 @@ final class Region() extends NativeBase() {
   final def storeAddress(addr: Long, v: Long) = Memory.storeAddress(addr, v)
   final def storeByte(addr: Long, v: Byte) = Memory.storeByte(addr, v)
   
-  final def loadBoolean(addr: Long): Boolean = if (Memory.loadByte(addr) == 0) false else true
+  final def loadBoolean(addr: Long): Boolean = Region.loadBoolean(addr)
   final def storeBoolean(addr: Long, v: Boolean) = Memory.storeByte(addr, if (v) 1 else 0)
 
-  final def loadBytes(addr: Long, n: Int): Array[Byte] = {
-    val a = new Array[Byte](n)
-    Memory.copyToArray(a, 0, addr, n)
-    a
-  }
-
-  final def loadBytes(addr: Long, dst: Array[Byte], dstOff: Long, n: Long): Unit = {
-    Memory.copyToArray(dst, dstOff, addr, n)
-  }
+  final def loadBytes(addr: Long, n: Int): Array[Byte] = Region.loadBytes(addr, n)
+  final def loadBytes(addr: Long, dst: Array[Byte], dstOff: Long, n: Long): Unit = Region.loadBytes(addr, dst, dstOff, n)
 
   final def storeBytes(addr: Long, src: Array[Byte]) {
     Memory.copyFromArray(addr, src, 0, src.length)
@@ -92,10 +108,7 @@ final class Region() extends NativeBase() {
     Memory.memcpy(dstOff, srcOff, n)
   }
 
-  final def loadBit(byteOff: Long, bitOff: Long): Boolean = {
-    val b = byteOff + (bitOff >> 3)
-    (loadByte(b) & (1 << (bitOff & 7))) != 0
-  }
+  final def loadBit(byteOff: Long, bitOff: Long): Boolean = Region.loadBit(byteOff, bitOff)
 
   final def setBit(byteOff: Long, bitOff: Long) {
     val b = byteOff + (bitOff >> 3)
