@@ -272,8 +272,8 @@ object TypeCheck {
         assert(path.typ isOfType TString())
       case _: SerializeAggs =>
       case _: DeserializeAggs =>
-      case x@Begin(xs) =>
-        xs.foreach { x =>
+      case x@Begin(init :+ _) =>
+        init.foreach { x =>
           assert(x.typ == TVoid)
         }
       case x@ApplyAggOp(constructorArgs, initOpArgs, seqOpArgs, aggSig) =>

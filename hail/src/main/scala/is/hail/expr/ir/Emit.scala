@@ -1106,13 +1106,11 @@ private class Emit(
 
         EmitTriplet(read, false, Code._empty)
 
-      case Begin(xs) =>
+      case Begin(init :+ last) =>
+        val initSetup = wrapToMethod(init) { case (_, t, code) => code.setup }
+        val lastT = emit(last)
         EmitTriplet(
-          wrapToMethod(xs) { case (_, t, code) =>
-            code.setup
-          },
-          const(false),
-          Code._empty)
+          Code(initSetup, lastT.setup), lastT.m, lastT.v)
 
       case x@MakeStruct(fields) =>
         val srvb = new StagedRegionValueBuilder(mb, x.pType)

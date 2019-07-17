@@ -1227,7 +1227,7 @@ class Begin(IR):
     def _compute_type(self, env, agg_env):
         for x in self.xs:
             x._compute_type(env, agg_env)
-        self._type = tvoid
+        self._type = self.xs[-1]._type
 
 
 class MakeStruct(IR):

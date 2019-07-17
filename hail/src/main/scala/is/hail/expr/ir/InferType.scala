@@ -45,7 +45,7 @@ object InferType {
       case _: WriteAggs => TVoid
       case _: SerializeAggs => TVoid
       case _: DeserializeAggs => TVoid
-      case _: Begin => TVoid
+      case Begin(init :+ last) => last.typ
       case Die(_, t) => t
       case If(cond, cnsq, altr) =>
         assert(cond.typ.isOfType(TBoolean()))
