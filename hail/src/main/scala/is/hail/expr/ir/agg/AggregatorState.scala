@@ -72,6 +72,10 @@ class TypedRVAState(val valueType: PType, val fb: EmitFunctionBuilder[_]) extend
 class TypedRVAState2(val valueType: PType, val fb: EmitFunctionBuilder[_]) extends AggregatorState {
   val storageType: PTuple = PTuple(required = true, valueType)
   private val needsRegion = valueType.containsPointers
+  if (needsRegion)
+    log.warn(s"$valueType needs region")
+  else
+    log.warn(s"$valueType doesn't need region")
   private val r: ClassFieldRef[Region] = fb.newField[Region]
   val off: ClassFieldRef[Long] = fb.newField[Long]
 
