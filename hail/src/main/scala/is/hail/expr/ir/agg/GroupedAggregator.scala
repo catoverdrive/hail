@@ -94,7 +94,7 @@ class DictState(val fb: EmitFunctionBuilder[_], val keyType: PType, val nested: 
       size := size + 1,
       region.setNumParents(size * (nStates + 1)),
       keyed.initValue(_elt, km, kv, size * nStates),
-      container.newStates)
+      container.initStates(keyed.containerAddress(_elt)))
   }
 
   def loadContainer(km: Code[Boolean], kv: Code[_]): Code[Unit] =
@@ -130,7 +130,7 @@ class DictState(val fb: EmitFunctionBuilder[_], val keyType: PType, val nested: 
   def init(initOps: Code[Unit]): Code[Unit] = Code(
     region.setNumParents(nStates),
     off := region.allocate(typ.alignment, typ.byteSize),
-    container.newStates,
+    container.initStates(initStatesOffset),
     initOps,
     container.store(0, initStatesOffset),
     size := 0,

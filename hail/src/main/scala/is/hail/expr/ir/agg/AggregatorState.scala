@@ -1,6 +1,6 @@
 package is.hail.expr.ir.agg
 
-import is.hail.annotations.{Region, StagedRegionValueBuilder}
+import is.hail.annotations.{Region, RegionUtils, StagedRegionValueBuilder}
 import is.hail.asm4s._
 import is.hail.expr.ir._
 import is.hail.expr.types.physical._
@@ -17,6 +17,7 @@ trait AggregatorState {
 
   def createState: Code[Unit]
   def newState: Code[Unit]
+  def initFromOffset(off: Code[Long]): Code[Unit] = newState
 
   def load(regionLoader: Code[Region] => Code[Unit], src: Code[Long]): Code[Unit]
   def store(regionStorer: Code[Region] => Code[Unit], dest: Code[Long]): Code[Unit]
@@ -65,6 +66,74 @@ class TypedRVAState(val valueType: PType, val fb: EmitFunctionBuilder[_]) extend
   def deserialize(codec: CodecSpec): Code[InputBuffer] => Code[Unit] = {
     val dec = codec.buildEmitDecoderF[Long](valueType, valueType, fb)
     ib: Code[InputBuffer] => off := dec(region, ib)
+  }
+}
+
+class TypedRVAState2(val valueType: PType, val fb: EmitFunctionBuilder[_]) extends AggregatorState {
+  val storageType: PTuple = PTuple(required = true, valueType)
+  private val needsRegion = valueType.containsPointers
+  private val r: ClassFieldRef[Region] = fb.newField[Region]
+  val off: ClassFieldRef[Long] = fb.newField[Long]
+
+  def regionCodeOrElse[T](c: => Code[T], other: => Code[T]): Code[T] =
+    if (needsRegion) c else other
+
+  def regionCodeOrEmpty(c: => Code[Unit]): Code[Unit] = regionCodeOrElse(c, Code._empty)
+
+  def newState: Code[Unit] = regionCodeOrEmpty(r.load().getNewRegion(regionSize))
+  override def initFromOffset(src: Code[Long]): Code[Unit] = Code(newState, off := src)
+  def createState: Code[Unit] = r.load().isNull.mux(Code(r := Code.newInstance[Region, Int](regionSize), r.load().invalidate()), Code._empty)
+
+  def load(regionLoader: Code[Region] => Code[Unit], src: Code[Long]): Code[Unit] =
+    Code(regionCodeOrEmpty(r.load().invalidate()), off := src)
+
+  def store(regionStorer: Code[Region] => Code[Unit], dest: Code[Long]): Code[Unit] =
+    Code(
+      regionCodeOrEmpty(r.load().isValid.orEmpty(Code(regionStorer(r.load()), r.load().invalidate()))),
+      dest.cne(off).orEmpty(Region.copyFrom(off, dest, storageType.byteSize)))
+
+  def setMissing(): Code[Unit] = storageType.setFieldMissing(off, 0)
+
+  def setValue(v: Code[_]): Code[Unit] = Code(
+    newState,
+    regionCodeOrElse(
+      StagedRegionValueBuilder.deepCopy(fb, r, valueType, v, storageType.fieldOffset(off, 0)),
+      Region.storeIRIntermediate(valueType)(storageType.fieldOffset(off, 0), v)),
+    storageType.setFieldPresent(off, 0))
+
+  def isMissing(): Code[Boolean] = storageType.isFieldMissing(off, 0)
+
+  def value(): Code[_] = Region.loadIRIntermediate(valueType)(storageType.fieldOffset(off, 0))
+
+  def copyFrom(src: Code[Long]): Code[Unit] =
+    Code(
+      newState,
+      regionCodeOrElse(
+        StagedRegionValueBuilder.deepCopy(fb, r.load(), storageType, src, off),
+        Region.copyFrom(src, off, storageType.byteSize)
+    )
+  )
+
+  def serialize(codec: CodecSpec): Code[OutputBuffer] => Code[Unit] = {
+    val enc = codec.buildEmitEncoderF[Long](storageType, storageType, fb);
+    ob: Code[OutputBuffer] => enc(r.load(), off, ob)
+  }
+
+  def deserialize(codec: CodecSpec): Code[InputBuffer] => Code[Unit] = {
+    val dec = codec.buildEmitDecoderF[Long](storageType, storageType, fb);
+    { ib: Code[InputBuffer] =>
+
+      if (needsRegion)
+        off := dec(r.load(), ib)
+      else {
+        val tmp = fb.newField[Long]
+        Code(
+          r.load().getNewRegion(regionSize),
+          tmp := dec(r.load(), ib),
+          copyFrom(tmp),
+          r.load().invalidate())
+      }
+    }
   }
 }
 
@@ -140,7 +209,7 @@ case class StateContainer(states: Array[AggregatorState], topRegion: Code[Region
   def apply(i: Int): AggregatorState = states(i)
   def getRegion(rOffset: Code[Int], i: Int): Code[Region] => Code[Unit] = { r: Code[Region] =>
     r.setFromParentReference(topRegion, rOffset + i, states(i).regionSize) }
-  def getStateOffset(off: Code[Long], i: Int): Code[Long] = typ.loadField(topRegion, off, i)
+  def getStateOffset(off: Code[Long], i: Int): Code[Long] = typ.fieldOffset(off, i)
 
   def setAllMissing(off: Code[Long]): Code[Unit] = toCode((i, _) =>
     topRegion.storeAddress(typ.fieldOffset(off, i), 0L))
@@ -151,8 +220,8 @@ case class StateContainer(states: Array[AggregatorState], topRegion: Code[Region
   def createStates: Code[Unit] =
     toCode((i, s) => s.createState)
 
-  def newStates: Code[Unit] =
-    toCode((_, s) => s.newState)
+  def initStates(stateOffset: Code[Long]): Code[Unit] =
+    toCode((i, s) => s.initFromOffset(getStateOffset(stateOffset, i)))
 
   def load(rOffset: Code[Int], stateOffset: Code[Long]): Code[Unit] =
     toCode((i, s) => s.load(getRegion(rOffset, i), getStateOffset(stateOffset, i)))

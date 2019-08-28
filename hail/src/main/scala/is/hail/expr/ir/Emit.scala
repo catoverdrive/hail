@@ -992,7 +992,7 @@ private class Emit(
 
         val argVars = args.map(a => emit(a, container = container.flatMap(_.nested(i)))).toArray
         void(
-          sc(i).newState,
+          sc(i).initFromOffset(sc.getStateOffset(aggOff, i)),
           rvAgg.initOp(sc(i), argVars))
 
       case SeqOp2(i, args, aggSig) =>
@@ -1058,7 +1058,7 @@ private class Emit(
           .map(_.deserialize(spec))
 
         val init = coerce[Unit](Code(Array.range(start, start + aggSigs.length)
-          .map(i => sc(i).newState): _*))
+          .map(i => sc(i).initFromOffset(sc.getStateOffset(aggOff, i))): _*))
 
         val unserialize = Array.tabulate(aggSigs.length) { j =>
           deserializers(j)(ib)

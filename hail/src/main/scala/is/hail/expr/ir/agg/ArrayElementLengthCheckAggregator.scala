@@ -59,7 +59,7 @@ class ArrayElementState(val fb: EmitFunctionBuilder[_], val nested: Array[Aggreg
         idx := idx + 1))
 
   def seq(seqOp: (Int, AggregatorState) => Code[Unit]): Code[Unit] =
-    seq(initArray, container.newStates, seqOp)
+    seq(initArray, container.initStates(statesOffset(idx)), seqOp)
 
   def initLength(len: Code[Int]): Code[Unit] = {
     Code(lenRef := len, seq((i, s) => s.copyFrom(initStateOffset(i))))
@@ -74,7 +74,7 @@ class ArrayElementState(val fb: EmitFunctionBuilder[_], val nested: Array[Aggreg
       Code(
         region.setNumParents(nStates),
         off := region.allocate(typ.alignment, typ.byteSize),
-        container.newStates,
+        container.initStates(initStatesOffset),
         initOp,
         container.store(0, initStatesOffset),
         if (initLen) typ.setFieldMissing(off, 1) else Code._empty)
