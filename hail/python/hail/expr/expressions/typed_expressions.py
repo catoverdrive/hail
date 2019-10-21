@@ -2065,6 +2065,38 @@ class NumericExpression(Expression):
     def __rpow__(self, other):
         return self._bin_op_numeric_reverse('**', other, lambda _: tfloat64)
 
+    @typecheck_method(missing=nullable(oneof(int, float)))
+    def collect_as_numpy(self, missing=0):
+        if missing is None:
+            non_missing = hl.case().when(hl.is_defined(self), self).or_error('Numpy does not support missing values')
+        else:
+            non_missing = hl.cond(hl.is_defined(self), self, missing)
+
+        src = self._indices.source
+        if src is None or len(self._indices.axes) == 0:
+            return hl.eval(non_missing)
+        elif isinstance(src, hl.Table):
+            return hl.eval(hl._ndarray(src.aggregate(hl.agg.collect(non_missing), _localize=False)))
+        else:
+            assert isinstance(src, hl.MatrixTable)
+            if self._indices.axes == {'row'}:
+                return hl.eval(hl._ndarray(src.aggregate_rows(hl.agg.collect(non_missing), _localize=False)))
+            elif self._indices.axes == {'col'}:
+                return hl.eval(hl._ndarray(src.aggregate_cols(hl.agg.collect(non_missing), _localize=False)))
+            else:
+                assert self._indices.axes == {'row', 'col'}
+                uid = Env.get_uid('collect_as_numpy')
+                mt = src.select_entries(**{uid: non_missing})
+                entries_uid = Env.get_uid('collect_as_numpy')
+                localized = mt.localize_entries(entries_uid)
+
+                entries = localized[entries_uid]
+                data = hl.agg.collect(entries.map(lambda e: e[uid]))
+                n_rows = hl.agg.count()
+                n_cols = hl.agg.take(hl.len(entries), 1)[0]
+                ndarray_expr = hl._ndarray(hl.flatten(data)).reshape((n_rows, n_cols))
+                return hl.eval(localized.aggregate(ndarray_expr, _localize=False).to_numpy())
+
 
 class BooleanExpression(NumericExpression):
     """Expression of type :py:data:`.tbool`.

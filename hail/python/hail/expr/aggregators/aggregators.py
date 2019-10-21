@@ -102,7 +102,7 @@ class AggFunc(object):
         _check_agg_bindings(aggregated, self._agg_bindings)
         self._agg_bindings.remove(var)
 
-        if not self._as_scan and not aggregated._aggregations:
+        if not self._as_scan and aggregated._aggregations:
             raise ExpressionException("'{}.explode' must take mapping that contains aggregation expression.".format(self.correct_prefix()))
 
         indices, _ = unify_all(array_agg_expr, aggregated)
