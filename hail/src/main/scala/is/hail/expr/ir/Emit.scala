@@ -173,6 +173,8 @@ case class ArrayIteratorTriplet(calcLength: Code[Unit], length: Option[Code[Int]
   }
 }
 
+case class LoopRef(m: ClassFieldRef[Boolean], v: ClassFieldRef[_], tempM: LocalRef[Boolean], tempV: LocalRef[_])
+
 abstract class MethodBuilderLike[M <: MethodBuilderLike[M]] {
   type MB <: MethodBuilder
 
@@ -271,7 +273,8 @@ private class Emit(
         def estimatedSize: Int = ir.size * opSize
 
         def emit(mbLike: EmitMethodBuilderLike): Code[Unit] =
-          useValues(mbLike.mb, ir.pType, mbLike.emit.emit(ir, env, rvas, EmitRegion.default(mbLike.emit.mb), container))
+          // wrapped methods can't contain uses of Recur
+          useValues(mbLike.mb, ir.pType, mbLike.emit.emit(ir, env, rvas, EmitRegion.default(mbLike.emit.mb), container, None))
       }
     }
 
@@ -323,13 +326,13 @@ private class Emit(
       if (nSpecialArguments == 2)
         Some(mb.fb.getArg[Array[RegionValueAggregator]](2))
       else
-        None, region, container)
+        None, region, container, None)
   }
 
-  private def emit(ir: IR, env: E, rvas: Emit.RVAS, er: EmitRegion, container: Option[AggContainer]): EmitTriplet = {
+  private def emit(ir: IR, env: E, rvas: Emit.RVAS, er: EmitRegion, container: Option[AggContainer], loopRefs: Option[Array[LoopRef]]): EmitTriplet = {
 
-    def emit(ir: IR, env: E = env, rvas: Emit.RVAS = rvas, er: EmitRegion = er, container: Option[AggContainer] = container): EmitTriplet =
-      this.emit(ir, env, rvas, er, container)
+    def emit(ir: IR, env: E = env, rvas: Emit.RVAS = rvas, er: EmitRegion = er, container: Option[AggContainer] = container, loopRefs: Option[Array[LoopRef]] = loopRefs): EmitTriplet =
+      this.emit(ir, env, rvas, er, container, loopRefs)
 
     def wrapToMethod(irs: Seq[IR], env: E = env, rvas: Emit.RVAS = rvas, container: Option[AggContainer] = container)(useValues: (EmitMethodBuilder, PType, EmitTriplet) => Code[Unit]): Code[Unit] =
       this.wrapToMethod(irs, env, rvas, container)(useValues)
@@ -1824,11 +1827,44 @@ private class Emit(
               ctxab.invoke[Array[Array[Byte]]]("result"),
               baos.invoke[Array[Byte]]("toByteArray")),
             decodeResult))
-      case x@Loop(args, body, rt) =>
-        val (argRefs, argIRs) = args.unzip
-        val refs = args.map { case (name, ir) => Ref(name, ir.typ) }
-        val args.map()
+      case x@TailLoop(args, body) =>
+        val (storeInitArgs, refs) = args.map { case (name, ir) =>
+          val t = emit(ir)
+          val ti = typeToTypeInfo(ir.typ)
+          val m = mb.newField[Boolean]
+          val v: ClassFieldRef[_] = mb.newField()(ti)
+          (Code(t.setup, m := t.m, (!m).orEmpty(v := t.value)), (name, ti, m, v))
+        }.unzip
 
+        val label = new CodeLabel
+        val m = mb.newField[Boolean]
+        val v = mb.newField()(typeToTypeInfo(x.typ))
+
+        val argEnv = env
+          .bind(refs.map { case (name, ti, m, v) => name -> (ti, m.load(), v.load()) } : _*)
+          .bind(TailLoop.bindingSym, (typeToTypeInfo(x.typ), const(false), label.goto))
+
+        val newLoopRefs = refs.map { case (name, ti, m, v) =>
+            LoopRef(m, v, mb.newLocal[Boolean], mb.newLocal()(ti))
+        }
+
+        val bodyT = emit(body, argEnv, Some(newLoopRefs))
+        val bodyF = Code(
+          bodyT.setup,
+          m := bodyT.m,
+          (!m).orEmpty(v := bodyT.value))
+
+        EmitTriplet(Code(storeInitArgs, label, bodyF), m, v)
+
+      case Recur(args, _) =>
+        val (_, _, jump) = env.lookup(TailLoop.bindingSym)
+        val refs = loopRefs.get
+        val storeTempArgs = Array.tabulate(refs.length) { i =>
+          emit(args(i), env.delete())
+
+
+        }
+        EmitTriplet(Code(Code(storeArgs: _*), jump), const(false), Code._empty)
     }
   }
 
