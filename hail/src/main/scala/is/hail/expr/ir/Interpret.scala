@@ -890,6 +890,17 @@ object Interpret {
         val f = env.lookup(TailLoop.bindingSym).asInstanceOf[Seq[Any] => Any]
         val argValues = args.map(interpret(_))
         f(argValues)
+      case IteratorStream(init, elt, hasNextIR, nextIR) =>
+        val initV = interpret(init)
+        new Iterator[Any] {
+          private var state: Any = initV
+          private val prevEnv: Env[Any] = env
+          def hasNext: Boolean = interpret(hasNextIR, prevEnv.bind(elt, state)).asInstanceOf[Boolean]
+          def next(): Any = {
+            state = interpret(nextIR, prevEnv.bind(elt, state))
+            state
+          }
+        }.toFastIndexedSeq
     }
   }
 }

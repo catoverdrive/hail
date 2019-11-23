@@ -1927,6 +1927,28 @@ private class Emit(
     def emitArrayIterator(ir: IR, env: E = env) = this.emitArrayIterator(ir, env, rvas, er, container)
 
     ir match {
+      case x@IteratorStream(initIR, elt, hasNextIR, nextIR) =>
+        val ts = coerce[PStruct](nextIR.pType)
+        val ti = typeToTypeInfo(initIR.typ)
+        val m = mb.newField[Boolean]
+        val v = mb.newField()(ti)
+        val init = emit(initIR)
+        val addInit = Code(init.setup, m := init.m, (!m).orEmpty(v := init.value))
+        val newEnv = env.bind(elt, (ti, m.load(), v.load()))
+        val hasNextT = emit(hasNextIR, newEnv)
+        val hasNext = Code(hasNextT.setup, (!hasNextT.m) && hasNextT.value[Boolean])
+        val next = emit(nextIR, newEnv)
+        val cont: F => EmitArrayTriplet = { continuation: F =>
+          EmitArrayTriplet(
+            addInit,
+            None,
+            Code.whileLoop(hasNext,
+              next.setup,
+              m := next.m,
+              (!m).orEmpty(v := next.value),
+              continuation(m, v)))
+        }
+        ArrayIteratorTriplet(Code._empty, None, cont)
       case x@ArrayRange(startir, stopir, stepir) =>
         val codeStart = emit(startir)
         val codeStop = emit(stopir)

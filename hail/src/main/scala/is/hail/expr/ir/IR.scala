@@ -164,6 +164,8 @@ object TailLoop {
 final case class TailLoop(params: Seq[(String, IR)], body: IR) extends IR
 final case class Recur(args: Seq[IR], _typ: Type) extends IR
 
+final case class IteratorStream(init: IR, elt: String, hasNext: IR, next: IR) extends IR
+
 final case class RelationalLet(name: String, value: IR, body: IR) extends IR
 final case class RelationalRef(name: String, _typ: Type) extends IR
 

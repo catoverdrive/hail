@@ -60,6 +60,8 @@ object InferType {
         body.typ
       case Recur(_, typ) =>
         typ
+      case IteratorStream(init, elt, hasNext, next) =>
+        TStream(next.typ)
       case ApplyBinaryPrimOp(op, l, r) =>
         BinaryOp.getReturnType(op, l.typ, r.typ).setRequired(l.typ.required && r.typ.required)
       case ApplyUnaryPrimOp(op, v) =>

@@ -633,6 +633,12 @@ object IRParser {
         val typ = type_expr(env.typEnv)(it)
         val args = ir_value_children(env)(it)
         Recur(args, typ)
+      case "IteratorStream" =>
+        val elt = identifier(it)
+        val init = ir_value_expr(env)(it)
+        val hasNext = ir_value_expr(env)(it)
+        val next = ir_value_expr(env)(it)
+        IteratorStream(init, elt, hasNext, next)
       case "Ref" =>
         val id = identifier(it)
         Ref(id, env.refMap(id))

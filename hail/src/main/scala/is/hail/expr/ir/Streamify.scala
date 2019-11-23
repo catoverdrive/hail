@@ -4,6 +4,36 @@ import is.hail.expr.types.virtual._
 
 object Streamify {
 
+  def rewriteTailRecursion(f: TailLoop): ArrayFold = {
+    val res = genUID()
+    val hasNext = genUID()
+    def callFStream(params: Seq[(String, IR)]): IR =
+      MakeStruct(params :+ res -> NA(f.typ) :+ hasNext -> True())
+    val init = callFStream(f.params)
+    val paramNames = f.params.map(_._1)
+
+    val elt = Ref(genUID(), init.typ)
+    def substEnv = BindingEnv.eval[IR](f.params.map { case (name, _) => name -> GetField(elt, name) }: _*)
+    def subst(node: IR): IR = Subst(node, substEnv)
+
+    def recur(body: IR): IR = body match {
+      case Recur(args, _) => callFStream(paramNames.zip(args.map(subst)))
+      case If(cond, cnsq, altr) =>
+        If(subst(cond), recur(cnsq), recur(altr))
+      case Let(name, value, body) =>
+        Let(name, subst(value), recur(body))
+      case x =>
+        MakeStruct(f.params.map { case (name, arg) => name -> NA(arg.typ) } :+ res -> subst(x) :+ hasNext -> False())
+    }
+
+    val updateState: IR = recur(f.body)
+
+    val it = IteratorStream(init, elt.name, GetField(elt, hasNext), updateState)
+    val accum = Ref(genUID(), f.typ)
+    val foldElt = Ref(genUID(), init.typ)
+    ArrayFold(it, NA(f.typ), accum.name, foldElt.name, GetField(foldElt, res))
+  }
+
   private[this] def streamify(streamableNode: IR): IR = streamableNode match {
     case _: MakeStream | _: StreamRange | _: ReadPartition => Copy(streamableNode, Children(streamableNode).map { case c: IR => apply(c) } )
     case ArrayRange(start, stop, step) => StreamRange(apply(start), apply(stop), apply(step))

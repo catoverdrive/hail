@@ -3013,7 +3013,7 @@ class IRSuite extends HailSuite {
   }
 
   @Test def testSimpleTailLoop(): Unit = {
-    val triangleSum: IR = TailLoop(
+    val triangleSum = TailLoop(
       FastIndexedSeq("x" -> In(0, TInt32()), "accum" -> I32(0)),
       If(Ref("x", TInt32()) <= I32(0),
         Ref("accum", TInt32()),

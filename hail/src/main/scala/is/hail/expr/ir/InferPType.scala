@@ -129,7 +129,12 @@ object InferPType {
         // FIXME: This may be difficult to infer properly from a bottom-up pass.
         args.foreach { a => InferPType(a, env) }
         PType.canonical(typ)
-
+      case IteratorStream(init, elt, hasNext, next) =>
+        InferPType(init, env)
+        val bodyEnv = env.bind(elt, init.pType2)
+        InferPType(hasNext, bodyEnv)
+        InferPType(next, bodyEnv)
+        PStream(next.pType2)
       case ApplyBinaryPrimOp(op, l, r) => {
           InferPType(l, env)
           InferPType(r, env)

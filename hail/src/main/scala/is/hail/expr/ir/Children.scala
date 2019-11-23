@@ -35,6 +35,8 @@ object Children {
       args.map(_._2).toFastIndexedSeq :+ body
     case Recur(args, _) =>
       args.toFastIndexedSeq
+    case IteratorStream(init, _, hasNext, next) =>
+      Array(init, hasNext, next)
     case Ref(name, typ) =>
       none
     case RelationalRef(_, _) =>

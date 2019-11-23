@@ -39,6 +39,9 @@ object Copy {
       case Recur(args, t) =>
         assert(newChildren.length == args.length)
         Recur(newChildren.map(_.asInstanceOf[IR]), t)
+      case IteratorStream(_, elt, _, _) =>
+        assert(newChildren.length == 3)
+        IteratorStream(newChildren(0).asInstanceOf[IR], elt, newChildren(1).asInstanceOf[IR], newChildren(2).asInstanceOf[IR])
       case Ref(name, t) => Ref(name, t)
       case RelationalRef(name, t) => RelationalRef(name, t)
       case RelationalLet(name, _, _) =>

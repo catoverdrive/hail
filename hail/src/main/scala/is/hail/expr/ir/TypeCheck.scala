@@ -121,10 +121,15 @@ object TypeCheck {
               }
           }
         assert(checkRecurOnlyInTail(body, true))
-      case x@Recur(args, typ) =>
+      case Recur(args, typ) =>
         val TTuple(IndexedSeq(TupleField(_, argTypes), TupleField(_, rt)), _) = env.eval.lookup(TailLoop.bindingSym)
         assert(argTypes.asInstanceOf[TTuple].types.zip(args).forall { case (t, ir) => t == ir.typ } )
         assert(typ == rt)
+      case x@IteratorStream(init, _, hasNext, next) =>
+        val eltType = coerce[TStream](x.typ).elementType
+        assert(eltType == next.typ)
+        assert(eltType == init.typ)
+        assert(hasNext.typ.isInstanceOf[TBoolean])
       case x@ApplyBinaryPrimOp(op, l, r) =>
         assert(x.typ == BinaryOp.getReturnType(op, l.typ, r.typ))
       case x@ApplyUnaryPrimOp(op, v) =>

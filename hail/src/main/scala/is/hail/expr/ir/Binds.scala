@@ -16,6 +16,8 @@ object Bindings {
     case TailLoop(args, body) => if (i == args.length)
       args.map { case (name, ir) => name -> ir.typ } :+
         TailLoop.bindingSym -> TTuple(TTuple(args.map(_._2.typ): _*), body.typ) else empty
+    case IteratorStream(init, elt, _, _) =>
+      if (i == 1 || i == 2) Array(elt -> init.typ)  else empty
     case ArrayMap(a, name, _) => if (i == 1) Array(name -> -coerce[TStreamable](a.typ).elementType) else empty
     case ArrayFor(a, name, _) => if (i == 1) Array(name -> -coerce[TStreamable](a.typ).elementType) else empty
     case ArrayFlatMap(a, name, _) => if (i == 1) Array(name -> -coerce[TStreamable](a.typ).elementType) else empty

@@ -250,6 +250,7 @@ object Pretty {
                 )
             case Let(name, _, _) => prettyIdentifier(name)
             case AggLet(name, _, _, isScan) => prettyIdentifier(name) + " " + prettyBooleanLiteral(isScan)
+            case IteratorStream(_, name, _, _) => prettyIdentifier(name)
             case Recur(_, t) => t.parsableString()
             case Ref(name, _) => prettyIdentifier(name)
             case RelationalRef(name, t) => prettyIdentifier(name) + " " + t.parsableString()
