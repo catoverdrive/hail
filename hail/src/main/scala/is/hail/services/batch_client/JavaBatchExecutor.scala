@@ -13,13 +13,13 @@ object JavaBatchSpec {
   def fromFile(localFile: String): JavaBatchSpec = {
     using(new FileInputStream(localFile)) { is =>
       implicit val formats: Formats = DefaultFormats
-      Serialization.read[JavaBatchSpec](is)
+      Serialization.read[JavaBatchSpecParams](is)
     }
   }
 
   def fromString(jsonString: String): JavaBatchSpec = {
     implicit val formats: Formats = DefaultFormats
-    Serialization.read[JavaBatchSpec](jsonString)
+    Serialization.read[JavaBatchSpecParams](jsonString)
   }
 }
 
