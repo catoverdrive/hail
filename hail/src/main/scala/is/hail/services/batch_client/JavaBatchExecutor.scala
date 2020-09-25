@@ -23,7 +23,12 @@ object JavaBatchSpec {
   }
 }
 
-case class JavaBatchSpecParams(name: Option[String], project: String, image: String, token: Option[String], jobs: IndexedSeq[JavaJobSpecParams]) {
+case class JavaBatchSpecParams(
+  name: Option[String],
+  project: String,
+  image: String,
+  token: Option[String],
+  jobs: IndexedSeq[JavaJobSpecParams]) {
   def asBatchSpec(): JavaBatchSpec =
     JavaBatchSpec(name.getOrElse(s"JavaBatchExecutor_${ tokenUrlSafe(5) }"), project, token.getOrElse(tokenUrlSafe(32)), jobs.map(_.asJobSpec(null, image)))
 }
@@ -125,7 +130,7 @@ class JavaJobSpec(val name: String, image: String, flags: IndexedSeq[String], cl
     "command" -> JArray(List(
       JString("/bin/bash"),
       JString("-c"),
-      JString(s"time java -cp $$SPARK_HOME/jars/*:/hail.jar $className ${args.mkString(" ")}"))),
+      JString(s"time java ${ flags.mkString(" ") } -cp $$SPARK_HOME/jars/*:/hail.jar $className ${args.mkString(" ")}"))),
     "input_files" -> JArray(inputFiles.map(_.asJValue).toList),
     "output_files" -> JArray(outputFiles.map(_.asJValue).toList),
     "job_id" -> JInt(id),
