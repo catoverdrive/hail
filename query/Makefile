@@ -21,13 +21,16 @@ build:
 	python3 ../ci/jinja2_render.py '{"service_base_image":{"image":"service-base"}}' Dockerfile Dockerfile.out
 	docker build -t query -f Dockerfile.out --cache-from query,$(QUERY_LATEST),service-base ..
 
-.PHONY: push
-push: build
-	docker tag query $(QUERY_LATEST)
-	docker push $(QUERY_LATEST)
+.PHONY: push-versioned
+push-versioned: build
 	docker tag query $(QUERY_IMAGE)
 	docker push $(QUERY_IMAGE)
 	@echo $(QUERY_IMAGE)
+
+.PHONY: push
+push: push-versioned
+	docker tag query $(QUERY_LATEST)
+	docker push $(QUERY_LATEST)
 
 .PHONY: deploy
 deploy: push
