@@ -23,12 +23,12 @@ object JavaBatchSpec {
   }
 }
 
-case class JavaBatchSpecParams(project: String, image: String, token: Option[String], jobs: IndexedSeq[JavaJobSpecParams]) {
+case class JavaBatchSpecParams(name: Option[String], project: String, image: String, token: Option[String], jobs: IndexedSeq[JavaJobSpecParams]) {
   def asBatchSpec(): JavaBatchSpec =
-    JavaBatchSpec(project, image, token.getOrElse(tokenUrlSafe(32)), jobs.map(_.asJobSpec(null, image)))
+    JavaBatchSpec(name.getOrElse(s"JavaBatchExecutor_${ tokenUrlSafe(5) }"), project, token.getOrElse(tokenUrlSafe(32)), jobs.map(_.asJobSpec(null, image)))
 }
 
-case class JavaBatchSpec(project: String, image: String, token: String, jobs: IndexedSeq[JavaJobSpec]) {
+case class JavaBatchSpec(name: String, project: String, token: String, jobs: IndexedSeq[JavaJobSpec]) {
   private[this] def parseDependencies(): IndexedSeq[JObject] = {
     val jobSpecs = new ArrayBuilder[JObject]()
     val incomplete = mutable.Set[JavaJobSpec](jobs: _*)
@@ -65,6 +65,7 @@ case class JavaBatchSpec(project: String, image: String, token: String, jobs: In
 
     val batch = client.run(
       JObject(
+        "name" -> JString(name),
         "billing_project" -> JString(project),
         "n_jobs" -> JInt(jobs.length),
         "token" -> JString(token)),
@@ -102,6 +103,8 @@ case class JavaJobSpecParams(
 }
 
 class JavaJobSpec(val name: String, image: String, flags: IndexedSeq[String], className: String, args: IndexedSeq[String], inputFiles: IndexedSeq[JavaBatchIOFiles], outputFiles: IndexedSeq[JavaBatchIOFiles], parents: IndexedSeq[String]) {
+  def this(name: String, image: String, className: String, args: IndexedSeq[String]) = this(name, image, FastIndexedSeq(), className, args, FastIndexedSeq(), FastIndexedSeq(), FastIndexedSeq())
+
   private[this] var id: Int = _
   private[this] var parentIds: IndexedSeq[Int] = _
 

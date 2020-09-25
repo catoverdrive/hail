@@ -12,7 +12,7 @@ import is.hail.expr.ir.{Compile, ExecuteContext, IR, IRParser, MakeTuple, SortFi
 import is.hail.types.physical.{PBaseStruct, PType}
 import is.hail.io.fs.{FS, GoogleStorageFS}
 import is.hail.linalg.BlockMatrix
-import is.hail.services.batch_client.BatchClient
+import is.hail.services.batch_client.{BatchClient, JavaBatchSpec, JavaJobSpec}
 import is.hail.types.BlockMatrixType
 import is.hail.types.virtual.Type
 import is.hail.utils._
@@ -160,36 +160,17 @@ class ServiceBackend() extends Backend {
       }
     }
 
-    val jobs = new Array[JObject](n)
+    val jobs = new Array[JavaJobSpec](n)
     var i = 0
     while (i < n) {
-      jobs(i) = JObject(
-          "always_run" -> JBool(false),
-          "image" -> JString(workerImage),
-          "mount_docker_socket" -> JBool(false),
-          "command" -> JArray(List(
-            JString("/bin/bash"),
-            JString("-c"),
-            JString(s"java -cp $$SPARK_HOME/jars/*:/hail.jar is.hail.backend.service.Worker $root $i"))),
-          "job_id" -> JInt(i),
-          "parent_ids" -> JArray(List()))
+      jobs(i) = new JavaJobSpec(s"parallelizeAndComputeWithIndex_$i", workerImage, Worker.getClass.getCanonicalName, FastIndexedSeq(root, i.toString))
       i += 1
     }
 
     log.info(s"parallelizeAndComputeWithIndex: token $token: running job")
 
     val batchClient = BatchClient.fromSessionID(backendContext.sessionID)
-    val batch = batchClient.run(
-      JObject(
-        "billing_project" -> JString(backendContext.billingProject),
-        "n_jobs" -> JInt(n),
-        "token" -> JString(token)),
-      jobs)
-    implicit val formats: Formats = DefaultFormats
-    val batchID = (batch \ "id").extract[Int]
-    val batchState = (batch \ "state").extract[String]
-    if (batchState != "success")
-      throw new RuntimeException(s"batch $batchID failed: $batchState")
+    JavaBatchSpec(s"query_cda_${ tokenUrlSafe(5) }", backendContext.billingProject, token, jobs).run(batchClient)
 
     log.info(s"parallelizeAndComputeWithIndex: token $token: reading results")
 
