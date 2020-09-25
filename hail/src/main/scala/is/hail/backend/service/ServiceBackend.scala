@@ -2,6 +2,7 @@ package is.hail.backend.service
 
 import java.io.{DataOutputStream, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream, PrintWriter, RandomAccessFile, StringWriter}
 
+import is.hail.HailContext
 import is.hail.annotations.{Region, UnsafeRow}
 import is.hail.asm4s._
 import is.hail.backend.{Backend, BackendContext, BroadcastValue}
@@ -91,8 +92,6 @@ final class Response(val status: Int, val value: String)
 class ServiceBackend() extends Backend {
   import ServiceBackend.log
 
-  private[this] val workerImage = System.getenv("HAIL_QUERY_WORKER_IMAGE")
-
   private[this] val users = mutable.Map[String, User]()
 
   def addUser(username: String, key: String): Unit = {
@@ -117,6 +116,9 @@ class ServiceBackend() extends Backend {
   }
 
   def parallelizeAndComputeWithIndex(_backendContext: BackendContext, collection: Array[Array[Byte]])(f: (Array[Byte], Int) => Array[Byte]): Array[Array[Byte]] = {
+    val workerImage = HailContext.getFlag("worker_image")
+    assert(workerImage != null)
+    log.info(s"parallelizeAndComputeWithIndex: using worker image $workerImage")
     val backendContext = _backendContext.asInstanceOf[ServiceBackendContext]
 
     val user = users(backendContext.username)

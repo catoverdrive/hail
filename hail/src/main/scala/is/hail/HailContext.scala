@@ -636,6 +636,7 @@ object HailFeatureFlags {
     ("use_packed_int_encoding", ("HAIL_DEV_USE_PACKED_INT_ENCODING" -> null)),
     ("use_column_encoding", ("HAIL_DEV_USE_COLUMN_ENCODING" -> null)),
     ("use_spicy_ptypes", ("HAIL_USE_SPICY_PTYPES" -> null)),
+    ("worker_image", ("HAIL_QUERY_WORKER_IMAGE" -> null)),
     ("log_service_timing", ("HAIL_DEV_LOG_SERVICE_TIMING" -> null)),
     ("cache_service_input", ("HAIL_DEV_CACHE_SERVICE_INPUT" -> null))
   )

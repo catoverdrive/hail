@@ -27,6 +27,7 @@ push: build
 	docker push $(QUERY_LATEST)
 	docker tag query $(QUERY_IMAGE)
 	docker push $(QUERY_IMAGE)
+	@echo $(QUERY_IMAGE)
 
 .PHONY: deploy
 deploy: push
