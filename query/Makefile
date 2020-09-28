@@ -5,6 +5,7 @@ PYTHON := PYTHONPATH=$${PYTHONPATH:+$${PYTHONPATH}:}$(EXTRA_PYTHONPATH) python3
 
 QUERY_LATEST = gcr.io/$(PROJECT)/query:latest
 QUERY_IMAGE = gcr.io/$(PROJECT)/query:$(shell docker images -q --no-trunc query | sed -e 's,[^:]*:,,')
+PROFILE_IMAGE = gcr.io/$(PROJECT)/jvm-profile:$(shell docker images -q --no-trunc jvm-profile | sed -e 's,[^:]*:,,')
 
 .PHONY: check
 check:
@@ -39,3 +40,18 @@ deploy: push
 	kubectl -n batch-pods apply -f service-account-batch-pods.yaml.out
 	python3 ../ci/jinja2_render.py '{"code":{"sha":"$(shell git rev-parse --short=12 HEAD)"},"deploy":true,"query_image":{"image":"$(QUERY_IMAGE)"},"batch_pods_ns":{"name":"batch-pods"},"global":{"project":"$(PROJECT)","domain":"$(DOMAIN)"}}' deployment.yaml deployment.yaml.out
 	kubectl -n default apply -f deployment.yaml.out
+
+.PHONY: build-profiler
+build-profiler:
+	make -C ../docker build
+	make -C ../hail shadowJar
+# janky
+	cp ../hail/build/libs/hail-all-spark.jar ./hail.jar
+	python3 ../ci/jinja2_render.py '{"service_base_image":{"image":"service-base"}}' Dockerfile.profile Dockerfile.profile.out
+	docker build -t jvm-profile -f Dockerfile.profile.out --cache-from jvm-profile,service-base ..
+
+.PHONY: push-profiler
+push-profiler: build-profiler
+	docker tag jvm-profile $(PROFILE_IMAGE)
+	docker push $(PROFILE_IMAGE)
+	@echo $(PROFILE_IMAGE)

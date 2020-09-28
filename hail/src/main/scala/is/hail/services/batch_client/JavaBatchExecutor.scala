@@ -39,11 +39,11 @@ case class JavaBatchSpec(name: String, project: String, token: String, jobs: Ind
     val incomplete = mutable.Set[JavaJobSpec](jobs: _*)
     val idMap = mutable.Map[String, Int]()
 
-    val namedSteps = jobs.filter(_.name != null).map(_.name).toSet
-
-    jobs.zipWithIndex.foreach { case (j, i) =>
-      if (j.name != null && namedSteps.contains(j.name))
+    val namedSteps = jobs.filter(_.name != null).foldLeft(mutable.Set[String]()) { case (s, j) =>
+      if (s.contains(j.name))
         throw new RuntimeException(s"Found duplicate named step: ${j.name}")
+      s += j.name
+      s
     }
 
     var changed = false
@@ -70,7 +70,8 @@ case class JavaBatchSpec(name: String, project: String, token: String, jobs: Ind
 
     val batch = client.run(
       JObject(
-        "name" -> JString(name),
+        "attributes" -> JObject("name" -> JString(name)),
+//        "name" -> JString(name),
         "billing_project" -> JString(project),
         "n_jobs" -> JInt(jobs.length),
         "token" -> JString(token)),
@@ -123,14 +124,14 @@ class JavaJobSpec(val name: String, image: String, flags: IndexedSeq[String], cl
   def setID(newID: Int): Unit = id = newID
 
   def asJValue: JObject = JObject(
-    "name" -> (if (name != null) JString(name) else JNull),
+    "attributes" -> JObject("name" -> (if (name != null) JString(name) else JNull)),
     "always_run" -> JBool(false),
     "image" -> JString(image),
     "mount_docker_socket" -> JBool(false),
     "command" -> JArray(List(
       JString("/bin/bash"),
       JString("-c"),
-      JString(s"time java ${ flags.mkString(" ") } -cp $$SPARK_HOME/jars/*:/hail.jar $className ${args.mkString(" ")}"))),
+      JString(s"time java ${ flags.mkString(" ") } -cp $$SPARK_HOME/jars/*:/hail.jar $className ${args.mkString(" ")}; chmod 777 /tmp/profile.hprof; ls -l /tmp"))),
     "input_files" -> JArray(inputFiles.map(_.asJValue).toList),
     "output_files" -> JArray(outputFiles.map(_.asJValue).toList),
     "job_id" -> JInt(id),

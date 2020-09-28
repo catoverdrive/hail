@@ -31,9 +31,14 @@ object Requester {
 
   private val httpClient: CloseableHttpClient = {
     log.info("creating HttpClient")
-    HttpClients.custom()
-      .setSSLContext(tls.getSSLContext)
-      .build()
+    try {
+      HttpClients.custom()
+        .setSSLContext(tls.getSSLContext)
+        .build()
+    } catch { case _: NoSSLConfigFound =>
+      log.info("creating HttpClient without SSL context")
+      HttpClients.custom().build()
+    }
   }
 }
 

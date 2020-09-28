@@ -41,18 +41,10 @@ object Worker {
       is.readObject().asInstanceOf[(Array[Byte], Int) => Array[Byte]]
     }
 
-    var offset = 0L
-    var length = 0
-
-    using(fs.openNoCompression(s"$root/context.offsets")) { is =>
-      is.seek(i * 12)
-      offset = is.readLong()
-      length = is.readInt()
-    }
-
-    println(s"offset $offset length $length")
-
     val context = using(fs.openNoCompression(s"$root/contexts")) { is =>
+      is.seek(i * 12)
+      val offset = is.readLong()
+      val length = is.readInt()
       is.seek(offset)
       val context = new Array[Byte](length)
       is.readFully(context)
@@ -138,10 +130,10 @@ class ServiceBackend() extends Backend {
       os.writeObject(f)
     }
 
-    log.info(s"parallelizeAndComputeWithIndex: token $token: writing context offsets")
+    log.info(s"parallelizeAndComputeWithIndex: token $token: writing contexts")
 
-    using(fs.createNoCompression(s"$root/context.offsets")) { os =>
-      var o = 0L
+    using(fs.createNoCompression(s"$root/contexts")) { os =>
+      var o = 12L * n
       var i = 0
       while (i < n) {
         val len = collection(i).length
@@ -150,11 +142,7 @@ class ServiceBackend() extends Backend {
         i += 1
         o += len
       }
-    }
 
-    log.info(s"parallelizeAndComputeWithIndex: token $token: writing contexts")
-
-    using(fs.createNoCompression(s"$root/contexts")) { os =>
       collection.foreach { context =>
         os.write(context)
       }
