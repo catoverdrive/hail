@@ -1,0 +1,1707 @@
+{
+  "name": "profile_worker",
+  "image": "gcr.io/hail-vdc/query:a685168f93ef23b940a763c4582b7b280413f2c6b351b649a02343c3a29936ae",
+  "project": "hail",
+  "jobs": [
+    {
+      "name": "profile_0",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "0"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_0.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_1",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "1"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_1.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_2",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "2"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_2.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_3",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "3"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_3.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_4",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "4"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_4.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_5",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "5"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_5.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_6",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "6"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_6.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_7",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "7"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_7.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_8",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "8"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_8.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_9",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "9"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_9.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_10",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "10"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_10.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_11",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "11"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_11.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_12",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "12"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_12.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_13",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "13"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_13.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_14",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "14"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_14.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_15",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "15"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_15.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_16",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "16"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_16.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_17",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "17"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_17.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_18",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "18"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_18.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_19",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "19"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_19.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_20",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "20"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_20.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_21",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "21"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_21.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_22",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "22"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_22.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_23",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "23"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_23.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_24",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "24"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_24.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_25",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "25"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_25.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_26",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "26"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_26.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_27",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "27"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_27.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_28",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "28"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_28.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_29",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "29"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_29.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_30",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "30"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_30.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_31",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "31"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_31.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_32",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "32"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_32.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_33",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "33"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_33.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_34",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "34"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_34.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_35",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "35"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_35.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_36",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "36"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_36.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_37",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "37"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_37.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_38",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "38"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_38.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_39",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "39"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_39.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_40",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "40"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_40.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_41",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "41"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_41.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_42",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "42"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_42.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_43",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "43"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_43.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_44",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "44"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_44.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_45",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "45"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_45.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_46",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "46"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_46.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_47",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "47"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_47.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_48",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "48"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_48.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_49",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "49"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_49.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_50",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "50"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_50.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_51",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "51"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_51.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_52",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "52"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_52.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_53",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "53"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_53.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_54",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "54"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_54.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_55",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "55"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_55.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_56",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "56"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_56.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_57",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "57"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_57.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_58",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "58"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_58.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_59",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "59"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_59.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_60",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "60"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_60.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_61",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "61"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_61.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_62",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "62"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_62.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_63",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "63"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_63.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_64",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "64"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_64.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_65",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "65"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_65.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_66",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "66"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_66.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_67",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "67"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_67.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_68",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "68"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_68.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_69",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "69"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_69.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_70",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "70"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_70.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_71",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "71"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_71.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_72",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "72"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_72.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_73",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "73"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_73.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_74",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "74"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_74.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_75",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "75"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_75.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_76",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "76"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_76.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_77",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "77"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_77.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_78",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "78"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_78.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_79",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "79"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_79.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_80",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "80"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_80.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_81",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "81"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_81.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_82",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "82"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_82.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_83",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "83"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_83.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_84",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "84"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_84.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_85",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "85"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_85.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_86",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "86"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_86.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_87",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "87"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_87.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_88",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "88"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_88.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_89",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "89"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_89.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_90",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "90"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_90.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_91",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "91"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_91.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_92",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "92"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_92.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_93",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "93"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_93.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_94",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "94"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_94.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_95",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "95"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_95.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_96",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "96"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_96.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_97",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "97"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_97.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_98",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "98"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_98.hprof"
+        }
+      ]
+    },
+    {
+      "name": "profile_99",
+      "flags": [
+        "-Xrunhprof:cpu=samples,file=/tmp/profile.hprof"
+      ],
+      "className": "is.hail.backend.service.Worker",
+      "args": [
+        "gs://amwang/test",
+        "99"
+      ],
+      "outputFiles": [
+        {
+          "from": "/tmp/profile.hprof",
+          "to": "gs://amwang/test/profile_99.hprof"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{main: '2020-09-23 03:44:44 INFO  Tokens:20 - tokens found for namespaces {default,
+    wang}
+
+    2020-09-23 03:44:44 INFO  Requester:34 - creating HttpClient
+
+    2020-09-23 03:44:44 INFO  Requester:40 - creating HttpClient with no SSL Context
+
+    2020-09-23 03:44:46 INFO  Requester:55 - request GET http://internal.hail/wang/memory/api/v1alpha/objects?q=gs%3A%2F%2Famwang%2Ftmp%2Fhail%2Fquery%2F9Od4agscw1JLhTNbB05CVGl1tg3NcHsfCWXTPJRoQmc%3D%2Ff&etag=CJLeiaCu%2FusCEAE%3D
+
+    2020-09-23 03:44:48 INFO  Requester:65 - request GET http://internal.hail/wang/memory/api/v1alpha/objects?q=gs%3A%2F%2Famwang%2Ftmp%2Fhail%2Fquery%2F9Od4agscw1JLhTNbB05CVGl1tg3NcHsfCWXTPJRoQmc%3D%2Ff&etag=CJLeiaCu%2FusCEAE%3D
+    response 200
+
+    2020-09-23 03:44:49 INFO  Requester:55 - request GET http://internal.hail/wang/memory/api/v1alpha/objects?q=gs%3A%2F%2Famwang%2Ftmp%2Fhail%2Fquery%2F9Od4agscw1JLhTNbB05CVGl1tg3NcHsfCWXTPJRoQmc%3D%2Fcontexts&etag=CKXrmqCu%2FusCEAE%3D
+
+    2020-09-23 03:44:49 INFO  Requester:65 - request GET http://internal.hail/wang/memory/api/v1alpha/objects?q=gs%3A%2F%2Famwang%2Ftmp%2Fhail%2Fquery%2F9Od4agscw1JLhTNbB05CVGl1tg3NcHsfCWXTPJRoQmc%3D%2Fcontexts&etag=CKXrmqCu%2FusCEAE%3D
+    response 200
+
+    2020-09-23 03:44:49 INFO  root:19 - RegionPool: initialized for thread 1: main
+
+    '}
+
