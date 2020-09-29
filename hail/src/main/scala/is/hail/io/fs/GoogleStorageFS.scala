@@ -1,6 +1,6 @@
 package is.hail.io.fs
 
-import java.io.{ByteArrayInputStream, FileNotFoundException, InputStream, OutputStream}
+import java.io.{ByteArrayInputStream, FileInputStream, FileNotFoundException, InputStream, OutputStream}
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.FileSystems
@@ -9,6 +9,9 @@ import com.google.auth.oauth2.ServiceAccountCredentials
 import com.google.cloud.{ReadChannel, WriteChannel}
 import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, BlobId, BlobInfo, Storage, StorageOptions}
+import is.hail.backend.service.RunWorker
+import is.hail.utils.using
+import org.apache.commons.io.IOUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -61,6 +64,13 @@ object GoogleStorageFS {
       i -= 1
     path.substring(0, i)
   }
+
+  def fromFile(file: String): GoogleStorageFS = using(new FileInputStream(file)) { is =>
+    new GoogleStorageFS(IOUtils.toString(is))
+  }
+
+  def apply(): GoogleStorageFS =
+    fromFile(sys.env.getOrElse("HAIL_GSA_KEY_FILE", "/gsa-key/key.json"))
 }
 
 object GoogleStorageFileStatus {
@@ -113,7 +123,7 @@ class GoogleStorageFS(serviceAccountKey: String) extends FS {
       bb.limit(0)
 
       private[this] var closed: Boolean = false
-      private[this] val reader: ReadChannel = storage.reader(bucket, path)
+      private[this] val reader: ReadChannel = RunWorker.time("storage.reader") { storage.reader(bucket, path) }
       private[this] var pos: Long = 0
       private[this] var eof: Boolean = false
 
@@ -130,7 +140,7 @@ class GoogleStorageFS(serviceAccountKey: String) extends FS {
         // read some bytes
         var n = 0
         while (n == 0) {
-          n = reader.read(bb)
+          n = RunWorker.time("reader.read") { reader.read(bb) }
           if (n == -1) {
             eof = true
             return

@@ -5,7 +5,9 @@ PYTHON := PYTHONPATH=$${PYTHONPATH:+$${PYTHONPATH}:}$(EXTRA_PYTHONPATH) python3
 
 QUERY_LATEST = gcr.io/$(PROJECT)/query:latest
 QUERY_IMAGE = gcr.io/$(PROJECT)/query:$(shell docker images -q --no-trunc query | sed -e 's,[^:]*:,,')
+PROFILE_LATEST = gcr.io/$(PROJECT)/jvm-profile:latest
 PROFILE_IMAGE = gcr.io/$(PROJECT)/jvm-profile:$(shell docker images -q --no-trunc jvm-profile | sed -e 's,[^:]*:,,')
+
 
 .PHONY: check
 check:
@@ -54,4 +56,6 @@ build-profiler:
 push-profiler: build-profiler
 	docker tag jvm-profile $(PROFILE_IMAGE)
 	docker push $(PROFILE_IMAGE)
+	docker tag jvm-profile $(PROFILE_LATEST)
+	docker push $(PROFILE_LATEST)
 	@echo $(PROFILE_IMAGE)

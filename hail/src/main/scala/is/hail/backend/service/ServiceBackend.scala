@@ -25,17 +25,50 @@ import org.json4s.jackson.JsonMethods
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
+object RunWorker {
+  def time[T](label: String)(f: => T): T = {
+    val start = System.nanoTime()
+    val res = f
+    val end = System.nanoTime()
+    val time = (end - start).toDouble / (1000 * 1000 * 1000).toDouble
+    println(s"TIME: $label: $time seconds")
+    res
+  }
+
+  def main(args: Array[String]): Unit = {
+    val root = args(0)
+    val idx = args(1)
+    val nItersTotal = args(2).toInt
+    val nItersPerKey = args(3).toInt
+    val keyFiles = args.slice(4, args.length)
+
+    var i = 0
+    while (i < nItersTotal) {
+      keyFiles.foreach { keyFile =>
+        var j = 0
+        while(j < nItersPerKey) {
+          val start = System.nanoTime()
+          Worker.main(Array(root, idx, keyFile))
+          val end = System.nanoTime()
+          val time = (end - start).toDouble / (1000 * 1000 * 1000).toDouble
+          println(s"single iteration: $time seconds")
+          j += 1
+        }
+      }
+      i += 1
+    }
+  }
+}
+
 object Worker {
   def main(args: Array[String]): Unit = {
-    if (args.length != 2)
+    if (args.length != 2 && args.length != 3)
       throw new IllegalArgumentException(s"expected one argument, not: ${ args.length }")
 
     val root = args(0)
     val i = args(1).toInt
 
-    val fs = using(new FileInputStream("/gsa-key/key.json")) { is =>
-      new GoogleStorageFS(IOUtils.toString(is))
-    }
+    val fs = if (args.length == 3) GoogleStorageFS.fromFile(args(2)) else GoogleStorageFS()
 
     val f = using(new ObjectInputStream(fs.openNoCompression(s"$root/f"))) { is =>
       is.readObject().asInstanceOf[(Array[Byte], Int) => Array[Byte]]
