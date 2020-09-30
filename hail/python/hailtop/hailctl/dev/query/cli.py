@@ -26,7 +26,7 @@ def init_parser(parser):
 
     set_parser.set_defaults(action='set')
     set_parser.add_argument("resource", type=str, choices=resource_types,
-                            help=f"Resource type.")
+                            help="Resource type.")
     set_parser.add_argument("name", type=str,
                             help="Name of resource.")
     set_parser.add_argument("value", type=str,
@@ -34,13 +34,13 @@ def init_parser(parser):
 
     unset_parser.set_defaults(action='unset')
     unset_parser.add_argument("resource", type=str, choices=resource_types,
-                            help=f"Resource type.")
+                              help="Resource type.")
     unset_parser.add_argument("name", type=str,
-                            help="Name of resource.")
+                              help="Name of resource.")
 
     get_parser.set_defaults(action='get')
     get_parser.add_argument("resource", type=str, choices=resource_types,
-                            help=f"Resource type.")
+                            help="Resource type.")
     get_parser.add_argument("name", type=str, nargs='*',
                             help="Name(s) of resource.")
 
@@ -92,6 +92,7 @@ class QueryClient:
             for name in names:
                 v = await self.get_request(f'flags/get/{name}')
                 print(f'{name.rjust(l)}: ' + (f'"{v}"' if v is not None else 'null'))
+
 
 async def submit(args):
     async with QueryClient() as client:
